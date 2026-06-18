@@ -1,7 +1,13 @@
 # Codex Defaults
 
-For coding, code review, debugging, refactoring, or new project creation, use
-the `karpathy-guidelines` skill when it is available.
+For each implementation task, read and use:
+
+- `/Users/thanhnguyen/Documents/Codex/agent-skills-codex-converted/codex-agent-lifecycle/SKILL.md`
+- the `karpathy-guidelines` skill when it is available
+
+Follow the lifecycle skill's context-engineering, incremental implementation,
+testing, review, and verification gates. If a fresh thread does not list the
+lifecycle skill as available, read it directly from the path above.
 
 Default behavior:
 
@@ -40,6 +46,8 @@ and seed it with instructions to:
 
 - work in `/Users/thanhnguyen/Documents/Codex/GraphQLAssistant`;
 - read `AGENTS.md`, `SPEC.md`, `tasks/plan.md`, and `tasks/todo.md` first;
+- read and use the local `codex-agent-lifecycle` skill specified in
+  `AGENTS.md`;
 - continue on `codex/build-graphql-assistant`;
 - implement Task N only; and
 - follow the complete task workflow above.
