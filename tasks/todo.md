@@ -1,8 +1,8 @@
 # GraphQL AI Assistant Task Checklist
 
-Status: Waiting for `tasks/plan.md` approval
+Status: Implementation in progress
 
-- [ ] Task 1 — Scaffold the Java 21 application and health endpoint
+- [x] Task 1 — Scaffold the Java 21 application and health endpoint
 - [ ] Task 2 — Load and validate the configured GraphQL schema
 - [ ] Task 3 — Establish API models, error handling, and request boundaries
 - [ ] Task 4 — Implement LangChain4j provider selection and configuration
