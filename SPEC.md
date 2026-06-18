@@ -60,8 +60,12 @@ server is required.
 Source repository:
 
 - GitHub: `https://github.com/skp2001vn/graphql-assistant2`
-- The local project will be initialized or connected to this repository during
-  implementation.
+- Visibility: private
+- Local `origin` is connected and authenticated with admin/push permission.
+- `main` contains the planning baseline.
+- Implementation branch: `codex/build-graphql-assistant`
+- Each completed task is committed atomically and pushed to the implementation
+  branch after its acceptance checks pass.
 
 ## 4. Runtime Configuration
 
@@ -585,10 +589,9 @@ The initial release is complete when:
 
 ## 18. Open Questions
 
-GitHub access note: on 2026-06-18, the connected GitHub app returned `404` for
-`skp2001vn/graphql-assistant2` even though the authenticated account is
-`skp2001vn`. Before publishing, repository visibility/app installation or local
-Git credentials must permit access.
+GitHub access was verified on 2026-06-18 through authenticated GitHub CLI:
+`skp2001vn` has admin permission, `main` is published, and the local workspace
+can push to `skp2001vn/graphql-assistant2`.
 
 Any further scope change after approval must update this specification and
 receive approval before implementation.

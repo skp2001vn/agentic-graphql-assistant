@@ -18,7 +18,8 @@ Date: 2026-06-18
 - Run explicit live smoke tests and evals against the user's running Ollama.
 - Keep implementation commits integrated with
   `https://github.com/skp2001vn/graphql-assistant2`.
-- After every task, run its targeted checks and update `tasks/todo.md`.
+- After every task, run its targeted checks, update `tasks/todo.md`, create one
+  atomic task commit, and push `codex/build-graphql-assistant`.
 - Run `./mvnw verify` before declaring the project ready.
 
 ## Task 1 — Scaffold the Java 21 Application and Health Endpoint
@@ -54,11 +55,11 @@ exposes the local health endpoint.
 - `GET /health` returns `200` and `{"status":"UP"}`.
 - Health does not call an AI provider.
 - Checkstyle and Spotless are configured for later release verification.
-- The directory is initialized as a Git repository if necessary.
-- `origin` is set to `https://github.com/skp2001vn/graphql-assistant2`.
-- Implementation occurs on a feature branch rather than directly on `main`.
-- If repository access is still unavailable, local work continues safely and
-  publishing remains an explicit readiness blocker.
+- The initialized repository tracks
+  `https://github.com/skp2001vn/graphql-assistant2`.
+- Implementation occurs on `codex/build-graphql-assistant`, not directly on
+  `main`.
+- The task commit is pushed only after the task's acceptance checks pass.
 
 ### Verification
 
@@ -523,9 +524,9 @@ configuration when available, and record readiness honestly.
 - All checklist items in `tasks/todo.md` reflect actual status.
 - Changes are organized into intentional commits on the feature branch.
 - The branch is pushed to `skp2001vn/graphql-assistant2` and a draft PR is
-  opened when access permits.
-- If repository access remains unavailable, `READINESS.md` records the exact
-  blocker and the local commits remain ready to publish.
+  opened after the final task.
+- GitHub authentication, remote reachability, and admin/push permission were
+  verified before implementation.
 
 ### Verification
 
