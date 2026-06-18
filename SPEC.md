@@ -1,6 +1,6 @@
 # GraphQL AI Assistant API Specification
 
-Status: Approved baseline; amendment pending approval
+Status: Approved
 Date: 2026-06-18
 
 ## 1. Objective
@@ -62,10 +62,11 @@ Source repository:
 - GitHub: `https://github.com/skp2001vn/graphql-assistant2`
 - Visibility: private
 - Local `origin` is connected and authenticated with admin/push permission.
-- `main` contains the planning baseline.
+- `main` contains the reviewed planning baseline and completed task merges.
 - Implementation branch: `codex/build-graphql-assistant`
 - Each completed task is committed atomically and pushed to the implementation
-  branch after its acceptance checks pass.
+  branch after its acceptance checks pass, reviewed through a pull request,
+  merged into `main`, and synchronized back to the implementation branch.
 
 ## 4. Runtime Configuration
 
@@ -509,8 +510,7 @@ Initial eval thresholds:
 
 ## 15. Exact Development and Verification Commands
 
-These commands are proposed for approval and will be enabled by the generated
-Maven project:
+These approved commands are enabled by the Maven project:
 
 ```text
 Dev:          ./mvnw spring-boot:run
@@ -565,9 +565,9 @@ The initial release is complete when:
 16. Deterministic evals meet all hard thresholds.
 17. Live generation and troubleshooting smoke tests run against the user's
     local Ollama `qwen3:8b`, and measured results are recorded.
-18. The implementation is committed to a feature branch connected to
-    `https://github.com/skp2001vn/graphql-assistant2`, pushed, and prepared as a
-    draft pull request unless repository access prevents it.
+18. Each completed implementation task is committed to
+    `codex/build-graphql-assistant`, reviewed through a pull request, merged into
+    `main`, and synchronized back to the implementation branch.
 
 ## 17. Out of Scope
 

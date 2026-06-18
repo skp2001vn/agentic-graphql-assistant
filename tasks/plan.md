@@ -1,6 +1,6 @@
 # GraphQL AI Assistant Implementation Plan
 
-Status: Draft for approval
+Status: Approved
 Specification: [`SPEC.md`](../SPEC.md)
 Date: 2026-06-18
 
@@ -18,8 +18,12 @@ Date: 2026-06-18
 - Run explicit live smoke tests and evals against the user's running Ollama.
 - Keep implementation commits integrated with
   `https://github.com/skp2001vn/graphql-assistant2`.
+- Within each task, use incremental test and verification checkpoints without
+  creating intermediate commits.
 - After every task, run its targeted checks, update `tasks/todo.md`, create one
-  atomic task commit, and push `codex/build-graphql-assistant`.
+  atomic task commit, push `codex/build-graphql-assistant`, open and review a
+  pull request, merge it into `main`, and synchronize the implementation branch
+  with `main`.
 - Run `./mvnw verify` before declaring the project ready.
 
 ## Task 1 — Scaffold the Java 21 Application and Health Endpoint
