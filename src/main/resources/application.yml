@@ -5,3 +5,12 @@ server:
 assistant:
   schema:
     location: classpath:schema.graphql
+  ai:
+    provider: ollama
+    request-timeout: 60s
+    ollama:
+      base-url: http://localhost:11434
+      model: qwen3:8b
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      model: gpt-5-mini
