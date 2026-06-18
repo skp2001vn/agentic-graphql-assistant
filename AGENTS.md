@@ -31,3 +31,18 @@ For each approved implementation task:
    such as `Merge pull request #...`.
 10. Synchronize `codex/build-graphql-assistant` with `main` before starting the
     next task.
+
+## Task Threads
+
+Use a fresh Codex thread for each implementation task to preserve context
+capacity. When the user says `Start Task N in a new thread`, create that thread
+and seed it with instructions to:
+
+- work in `/Users/thanhnguyen/Documents/Codex/GraphQLAssistant`;
+- read `AGENTS.md`, `SPEC.md`, `tasks/plan.md`, and `tasks/todo.md` first;
+- continue on `codex/build-graphql-assistant`;
+- implement Task N only; and
+- follow the complete task workflow above.
+
+Use a fork only for parallel exploration of an alternative approach, not as the
+default way to begin the next task.
