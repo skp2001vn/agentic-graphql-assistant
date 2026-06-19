@@ -23,4 +23,4 @@ assistant:
       model: qwen3:8b
     openai:
       api-key: ${OPENAI_API_KEY:}
-      model: gpt-5-mini
+      model: gpt-5.4-mini

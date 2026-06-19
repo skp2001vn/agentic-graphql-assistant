@@ -73,7 +73,7 @@ class AssistantLoggingTest {
             "\"event\":\"assistant_request_started\"",
             "\"requestId\":\"" + REQUEST_ID + "\"",
             "\"provider\":\"openai\"",
-            "\"model\":\"gpt-5-mini\"",
+            "\"model\":\"gpt-5.4-mini\"",
             "\"selectedAgent\":\"GENERATION\"",
             "\"schema\":",
             "type Query",
@@ -146,7 +146,7 @@ class AssistantLoggingTest {
     @Primary
     AssistantAiProvider testAssistantAiProvider(
         AssistantRequestLogger requestLogger, TestChatModel delegate) {
-      return new LangChain4jAssistantProvider("openai", "gpt-5-mini", delegate, requestLogger);
+      return new LangChain4jAssistantProvider("openai", "gpt-5.4-mini", delegate, requestLogger);
     }
 
     @Bean
@@ -179,7 +179,7 @@ class AssistantLoggingTest {
         case 0 ->
             ChatResponse.builder()
                 .id("response-id")
-                .modelName("gpt-5-mini")
+                .modelName("gpt-5.4-mini")
                 .aiMessage(
                     AiMessage.builder()
                         .text(

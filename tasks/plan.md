@@ -175,7 +175,7 @@ at startup through validated configuration.
 
 - `ollama` is selected by default.
 - Ollama defaults to `http://localhost:11434` and `qwen3:8b`.
-- OpenAI defaults to `gpt-5-mini` and requires a nonblank API key.
+- OpenAI defaults to `gpt-5.4-mini` and requires a nonblank API key.
 - Unsupported provider values and missing selected-provider settings fail
   startup clearly.
 - Exactly one provider/chat model is active.

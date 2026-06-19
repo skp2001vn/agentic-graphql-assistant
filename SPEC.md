@@ -95,7 +95,7 @@ assistant:
       model: qwen3:8b
     openai:
       api-key: ${OPENAI_API_KEY:}
-      model: gpt-5-mini
+      model: gpt-5.4-mini
 ```
 
 Rules:
@@ -545,7 +545,7 @@ The initial release is complete when:
 2. Invalid or missing schemas stop startup with a useful error.
 3. Ollama is the default provider using `qwen3:8b` at
    `http://localhost:11434`.
-4. OpenAI can be selected at startup and defaults to `gpt-5-mini`.
+4. OpenAI can be selected at startup and defaults to `gpt-5.4-mini`.
 5. `/assistant` generates named, schema-valid, pretty-printed operations and
    variables from English prompts.
 6. `/assistant` reports all AI-identified troubleshooting issues and returns the
