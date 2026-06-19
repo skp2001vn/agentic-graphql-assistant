@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.example.graphqlassistant.agent.AssistantOrchestrator;
 import com.example.graphqlassistant.agent.InvalidAgentResponseException;
 import com.example.graphqlassistant.agent.LangChain4jAgentFactory;
+import com.example.graphqlassistant.api.AssistantResponse;
 import com.example.graphqlassistant.api.GenerateResponse;
 import com.example.graphqlassistant.provider.AiProviderException;
 import com.example.graphqlassistant.provider.AssistantAiProvider;
@@ -77,9 +78,11 @@ class GenerationServiceTest {
               };
             });
 
-    GenerateResponse result =
-        service.generate("Generate a query that lists country codes and names.");
+    AssistantResponse response =
+        service.assist("Generate a query that lists country codes and names.");
 
+    assertThat(response).isInstanceOf(GenerateResponse.class);
+    GenerateResponse result = (GenerateResponse) response;
     assertThat(result.intent()).isEqualTo("GENERATE");
     assertThat(result.query())
         .isEqualTo(
@@ -119,7 +122,7 @@ class GenerationServiceTest {
                     }
                     """)));
 
-    GenerateResponse result = service.generate("Generate a query for country CA.");
+    GenerateResponse result = (GenerateResponse) service.assist("Generate a query for country CA.");
 
     assertThat(result.query()).startsWith("query GetCountry($code: ID!)");
     assertThat(result.variables()).containsExactlyEntriesOf(Map.of("code", "CA"));
@@ -143,7 +146,7 @@ class GenerationServiceTest {
                     }
                     """)));
 
-    assertThatThrownBy(() -> service.generate("Generate a query"))
+    assertThatThrownBy(() -> service.assist("Generate a query"))
         .isInstanceOf(InvalidAgentResponseException.class);
   }
 
@@ -182,9 +185,9 @@ class GenerationServiceTest {
                     }
                     """)));
 
-    assertThatThrownBy(() -> contradictory.generate("Generate a query"))
+    assertThatThrownBy(() -> contradictory.assist("Generate a query"))
         .isInstanceOf(InvalidAgentResponseException.class);
-    assertThatThrownBy(() -> invalid.generate("Generate a query"))
+    assertThatThrownBy(() -> invalid.assist("Generate a query"))
         .isInstanceOf(InvalidAgentResponseException.class);
   }
 
@@ -206,7 +209,7 @@ class GenerationServiceTest {
                     }
                     """)));
 
-    assertThatThrownBy(() -> service.generate("Generate a query"))
+    assertThatThrownBy(() -> service.assist("Generate a query"))
         .isInstanceOf(InvalidAgentResponseException.class);
   }
 
@@ -231,7 +234,7 @@ class GenerationServiceTest {
                     """
                         .formatted(oversizedOperation))));
 
-    assertThatThrownBy(() -> service.generate("Generate a query"))
+    assertThatThrownBy(() -> service.assist("Generate a query"))
         .isInstanceOf(InvalidAgentResponseException.class);
   }
 
@@ -243,7 +246,7 @@ class GenerationServiceTest {
               throw new AiProviderException("ollama", "qwen3:8b");
             });
 
-    assertThatThrownBy(() -> service.generate("Generate a query"))
+    assertThatThrownBy(() -> service.assist("Generate a query"))
         .isInstanceOf(AiProviderException.class);
   }
 
@@ -262,7 +265,7 @@ class GenerationServiceTest {
               throw new AiProviderException("ollama", "qwen3:8b");
             });
 
-    assertThatThrownBy(() -> service.generate("Generate a query"))
+    assertThatThrownBy(() -> service.assist("Generate a query"))
         .isInstanceOf(AiProviderException.class);
   }
 
