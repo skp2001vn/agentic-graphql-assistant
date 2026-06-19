@@ -325,8 +325,8 @@ AI-identified issues plus the corrected operation.
   applying the identified fixes.
 - The corrected operation is named, parsed, schema-validated, and returned as a
   pretty-printed array containing one line per element.
-- Empty issue lists, missing corrections, and invalid corrected operations
-  produce `502 INVALID_AI_RESPONSE`.
+- Empty issue lists are returned for valid submitted operations. Missing
+  corrections and invalid corrected operations produce `502 INVALID_AI_RESPONSE`.
 - Multiple-issue troubleshooting is covered by deterministic tests.
 
 ### Verification

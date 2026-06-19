@@ -35,7 +35,8 @@ public interface TroubleshootingToolAgent {
       {"intent":"TROUBLESHOOT","issues":[{"issue":"...","details":"...",
       "suggestion":"..."}],"operation":"...","variables":{"code":"<runtime value>"}}.
       Replace code with each declared variable name and use its supplied or placeholder value.
-      The issues array must be nonempty.
+      If validateOperation reports that the supplied operation is already valid, return an empty
+      issues array and preserve the operation.
       """)
   @UserMessage("{{prompt}}")
   String troubleshoot(@V("prompt") String prompt);

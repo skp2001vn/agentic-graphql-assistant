@@ -57,6 +57,46 @@ class TroubleshootingApiTest {
   }
 
   @Test
+  void returnsAnEmptyIssueListForAValidMultilineOperation() throws Exception {
+    String prompt =
+        """
+        debug the below query:
+        query CountryQuery($code: ID!) {
+          country(code: $code) {
+            code
+            name
+          }
+        }
+        """;
+    when(assistantService.assist(prompt))
+        .thenReturn(
+            new TroubleshootResponse(
+                List.of(),
+                """
+                query CountryQuery($code: ID!) {
+                  country(code: $code) {
+                    code
+                    name
+                  }
+                }
+                """,
+                Map.of("code", "<runtime value>")));
+
+    mockMvc
+        .perform(
+            post("/assistant")
+                .contentType(MediaType.TEXT_PLAIN)
+                .accept(MediaType.APPLICATION_JSON)
+                .content(prompt))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.intent").value("TROUBLESHOOT"))
+        .andExpect(jsonPath("$.issues").isEmpty())
+        .andExpect(jsonPath("$.correctedQuery").isArray())
+        .andExpect(jsonPath("$.correctedQuery[0]").value("query CountryQuery($code: ID!) {"))
+        .andExpect(jsonPath("$.variables.code").value("<runtime value>"));
+  }
+
+  @Test
   void mapsInvalidTroubleshootingResultsToBadGateway() throws Exception {
     String prompt = "Troubleshoot this query";
     when(assistantService.assist(prompt)).thenThrow(new InvalidAgentResponseException("invalid"));
