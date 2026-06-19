@@ -67,6 +67,26 @@ class OpenApiTest {
         document.path("components").path("schemas").path("TroubleshootResponse"),
         "TROUBLESHOOT",
         Set.of("intent", "issues", "correctedQuery", "variables"));
+    assertThat(
+            document
+                .path("components")
+                .path("schemas")
+                .path("GenerateResponse")
+                .path("properties")
+                .path("query")
+                .path("type")
+                .asString())
+        .isEqualTo("array");
+    assertThat(
+            document
+                .path("components")
+                .path("schemas")
+                .path("TroubleshootResponse")
+                .path("properties")
+                .path("correctedQuery")
+                .path("type")
+                .asString())
+        .isEqualTo("array");
 
     assertThat(responseCodes(responses))
         .containsExactlyInAnyOrder("200", "400", "413", "415", "422", "500", "502");

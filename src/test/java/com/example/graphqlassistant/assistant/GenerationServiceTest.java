@@ -85,16 +85,8 @@ class GenerationServiceTest {
     GenerateResponse result = (GenerateResponse) response;
     assertThat(result.intent()).isEqualTo("GENERATE");
     assertThat(result.query())
-        .isEqualTo(
-            """
-            query ListCountries {
-              countries {
-                code
-                name
-              }
-            }
-            """
-                .strip());
+        .containsExactly(
+            "query ListCountries {", "  countries {", "    code", "    name", "  }", "}");
     assertThat(result.variables()).isEmpty();
     assertThat(requests).hasSize(3);
     assertThat(requests.get(1).toolSpecifications())
@@ -124,7 +116,7 @@ class GenerationServiceTest {
 
     GenerateResponse result = (GenerateResponse) service.assist("Generate a query for country CA.");
 
-    assertThat(result.query()).startsWith("query GetCountry($code: ID!)");
+    assertThat(result.query().getFirst()).isEqualTo("query GetCountry($code: ID!) {");
     assertThat(result.variables()).containsExactlyEntriesOf(Map.of("code", "CA"));
   }
 

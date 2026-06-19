@@ -105,16 +105,8 @@ class TroubleshootingServiceTest {
         .containsExactly(
             "Operation name must use PascalCase.", "Unknown fields id and title on Country.");
     assertThat(result.correctedQuery())
-        .isEqualTo(
-            """
-            query ListCountries {
-              countries {
-                code
-                name
-              }
-            }
-            """
-                .strip());
+        .containsExactly(
+            "query ListCountries {", "  countries {", "    code", "    name", "  }", "}");
     assertThat(result.variables()).isEmpty();
     assertThat(requests).hasSize(5);
     assertThat(requests.get(1).toolSpecifications())
@@ -180,7 +172,8 @@ class TroubleshootingServiceTest {
             service.assist("Debug query CountryQuery($code: ID!) { country(code) { code name1 } }");
 
     assertThat(response.issues()).hasSize(2);
-    assertThat(response.correctedQuery()).contains("country(code: $code)", "code", "name");
+    assertThat(response.correctedQuery())
+        .contains("  country(code: $code) {", "    code", "    name");
     assertThat(response.variables()).containsEntry("code", "<runtime value>");
   }
 

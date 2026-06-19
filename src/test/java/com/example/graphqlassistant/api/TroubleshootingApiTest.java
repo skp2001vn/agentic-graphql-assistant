@@ -50,7 +50,9 @@ class TroubleshootingApiTest {
         .andExpect(jsonPath("$.issues[0].issue").value("Unknown field title."))
         .andExpect(jsonPath("$.issues[0].details").value("Country defines name rather than title."))
         .andExpect(jsonPath("$.issues[0].suggestion").value("Replace title with name."))
-        .andExpect(jsonPath("$.correctedQuery").value(org.hamcrest.Matchers.containsString("name")))
+        .andExpect(jsonPath("$.correctedQuery").isArray())
+        .andExpect(jsonPath("$.correctedQuery[0]").value("query ListCountries {"))
+        .andExpect(jsonPath("$.correctedQuery[2]").value("    name"))
         .andExpect(jsonPath("$.variables").isMap());
   }
 

@@ -11,13 +11,18 @@ import java.util.Objects;
 public record TroubleshootResponse(
     @Schema(allowableValues = "TROUBLESHOOT") String intent,
     List<TroubleshootingIssue> issues,
-    String correctedQuery,
+    @Schema(description = "Pretty-printed corrected GraphQL operation, one line per array element")
+        List<String> correctedQuery,
     Map<String, Object> variables)
     implements AssistantResponse {
 
   public TroubleshootResponse(
       List<TroubleshootingIssue> issues, String correctedQuery, Map<String, Object> variables) {
-    this("TROUBLESHOOT", issues, correctedQuery, variables);
+    this(
+        "TROUBLESHOOT",
+        issues,
+        correctedQuery == null ? null : correctedQuery.lines().toList(),
+        variables);
   }
 
   public TroubleshootResponse {
@@ -28,9 +33,13 @@ public record TroubleshootResponse(
     if (issues.isEmpty()) {
       throw new IllegalArgumentException("Troubleshoot response issues must not be empty");
     }
-    if (correctedQuery == null || correctedQuery.isBlank()) {
+    if (correctedQuery == null
+        || correctedQuery.isEmpty()
+        || correctedQuery.stream().anyMatch(Objects::isNull)
+        || correctedQuery.stream().allMatch(String::isBlank)) {
       throw new IllegalArgumentException("Troubleshoot response corrected query must not be blank");
     }
+    correctedQuery = List.copyOf(correctedQuery);
     variables =
         Collections.unmodifiableMap(
             new LinkedHashMap<>(Objects.requireNonNull(variables, "variables")));

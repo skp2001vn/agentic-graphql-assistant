@@ -20,7 +20,14 @@ public class OpenApiConfiguration {
       """
       {
         "intent": "GENERATE",
-        "query": "query ListCountries {\\n  countries {\\n    code\\n    name\\n  }\\n}",
+        "query": [
+          "query ListCountries {",
+          "  countries {",
+          "    code",
+          "    name",
+          "  }",
+          "}"
+        ],
         "variables": {}
       }
       """;
@@ -36,7 +43,13 @@ public class OpenApiConfiguration {
             "suggestion": "Replace 'title' with 'name'."
           }
         ],
-        "correctedQuery": "query ListCountries {\\n  countries {\\n    name\\n  }\\n}",
+        "correctedQuery": [
+          "query ListCountries {",
+          "  countries {",
+          "    name",
+          "  }",
+          "}"
+        ],
         "variables": {}
       }
       """;

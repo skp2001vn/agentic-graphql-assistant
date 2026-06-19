@@ -29,7 +29,7 @@ final class EvalScorer {
 
     String operation;
     if (response instanceof GenerateResponse generated) {
-      operation = generated.query();
+      operation = String.join("\n", generated.query());
       if (!expectation.variables().equals(generated.variables())) {
         failures.add("variables did not match");
       }
@@ -37,7 +37,7 @@ final class EvalScorer {
         failures.add("response contract did not include troubleshooting issues");
       }
     } else if (response instanceof TroubleshootResponse troubleshot) {
-      operation = troubleshot.correctedQuery();
+      operation = String.join("\n", troubleshot.correctedQuery());
       if (!expectation.variables().equals(troubleshot.variables())) {
         failures.add("variables did not match");
       }

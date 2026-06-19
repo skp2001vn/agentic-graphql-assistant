@@ -45,7 +45,9 @@ class GenerationApiTest {
                 .content("Generate country CA"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.intent").value("GENERATE"))
-        .andExpect(jsonPath("$.query").value(org.hamcrest.Matchers.containsString("GetCountry")))
+        .andExpect(jsonPath("$.query").isArray())
+        .andExpect(jsonPath("$.query[0]").value("query GetCountry($code: ID!) {"))
+        .andExpect(jsonPath("$.query[1]").value("  country(code: $code) {"))
         .andExpect(jsonPath("$.variables.code").value("CA"));
   }
 
