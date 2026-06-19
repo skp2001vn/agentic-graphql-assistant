@@ -18,8 +18,9 @@ public interface TroubleshootingAgent {
       operation's purpose while applying all reported fixes. Use only the approved GraphQL tools
       to inspect the schema, validate the correction, and format it. Never execute GraphQL or
       access any external resource. Return only structured output with intent TROUBLESHOOT,
-      a nonempty issues list containing issue, details, and suggestion for every issue, the
+      an issues list containing issue, details, and suggestion for every identified issue, the
       complete corrected operation, and a JSON variables object.
+      If the supplied operation is valid, return an empty issues list and preserve the operation.
       """)
   @UserMessage("{{prompt}}")
   SpecialistResult troubleshoot(@V("prompt") String prompt);

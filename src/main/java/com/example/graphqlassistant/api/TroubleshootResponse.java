@@ -30,9 +30,6 @@ public record TroubleshootResponse(
       throw new IllegalArgumentException("Troubleshoot response intent must be TROUBLESHOOT");
     }
     issues = List.copyOf(Objects.requireNonNull(issues, "issues"));
-    if (issues.isEmpty()) {
-      throw new IllegalArgumentException("Troubleshoot response issues must not be empty");
-    }
     if (correctedQuery == null
         || correctedQuery.isEmpty()
         || correctedQuery.stream().anyMatch(Objects::isNull)

@@ -37,6 +37,22 @@ class TroubleshootingServiceTest {
       type Country {
         code: ID!
         name: String!
+        native: String!
+        emoji: String!
+        capital: String
+        currency: String
+        continent: Continent!
+        languages: [Language!]!
+      }
+
+      type Continent {
+        code: ID!
+        name: String!
+      }
+
+      type Language {
+        code: ID!
+        name: String
       }
       """;
 
@@ -178,20 +194,57 @@ class TroubleshootingServiceTest {
   }
 
   @Test
-  void rejectsEmptyIssueListsAndMissingCorrections() {
-    AssistantService emptyIssues =
+  void returnsNoIssuesForAValidMultilineOperation() {
+    String operation =
+        """
+        query CountryQuery($code: ID!) {
+          country(code: $code) {
+            code
+            name
+            native
+            emoji
+            capital
+            currency
+            continent {
+              code
+              name
+            }
+            languages {
+              code
+              name
+            }
+          }
+        }
+        """;
+    AssistantService service =
         service(
             sequentialResponses(
                 troubleshootingRoute(),
+                toolCall(
+                    "validate-original",
+                    "validateOperation",
+                    "{\"operation\":" + jsonString(operation) + "}"),
                 response(
                     """
                     {
                       "intent":"TROUBLESHOOT",
                       "issues":[],
-                      "operation":"query ListCountries { countries { code name } }",
-                      "variables":{}
+                      "operation":%s,
+                      "variables":{"code":"<runtime value>"}
                     }
-                    """)));
+                    """
+                        .formatted(jsonString(operation)))));
+
+    TroubleshootResponse response =
+        (TroubleshootResponse) service.assist("debug the below query:\n" + operation);
+
+    assertThat(response.issues()).isEmpty();
+    assertThat(response.correctedQuery()).containsExactly(operation.strip().split("\\R"));
+    assertThat(response.variables()).containsEntry("code", "<runtime value>");
+  }
+
+  @Test
+  void rejectsMissingCorrections() {
     AssistantService missingCorrection =
         service(
             sequentialResponses(
@@ -209,8 +262,6 @@ class TroubleshootingServiceTest {
                     }
                     """)));
 
-    assertThatThrownBy(() -> emptyIssues.assist("Troubleshoot this query"))
-        .isInstanceOf(InvalidAgentResponseException.class);
     assertThatThrownBy(() -> missingCorrection.assist("Troubleshoot this query"))
         .isInstanceOf(InvalidAgentResponseException.class);
   }
@@ -308,6 +359,16 @@ class TroubleshootingServiceTest {
         .map(ToolExecutionResultMessage::text)
         .reduce((previous, latest) -> latest)
         .orElseThrow();
+  }
+
+  private static String jsonString(String value) {
+    return "\""
+        + value
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("\r", "\\r")
+            .replace("\n", "\\n")
+        + "\"";
   }
 
   private record FakeProvider(Function<ChatRequest, ChatResponse> responder)

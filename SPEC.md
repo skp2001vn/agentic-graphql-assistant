@@ -252,7 +252,8 @@ Status: `200 OK`
 Required fields:
 
 - `intent`: always `TROUBLESHOOT`
-- `issues`: nonempty array containing all issues identified by the AI
+- `issues`: array containing all issues identified by the AI; it is empty when
+  the submitted operation is valid
 - `issues[].issue`: concise issue summary
 - `issues[].details`: explanation grounded in the configured schema
 - `issues[].suggestion`: specific remediation

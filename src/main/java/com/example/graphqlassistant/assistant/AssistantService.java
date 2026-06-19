@@ -109,9 +109,6 @@ public final class AssistantService {
   }
 
   private TroubleshootResponse troubleshootResponse(SpecialistResult result, String operation) {
-    if (result.issues().isEmpty()) {
-      throw invalidResponse();
-    }
     List<TroubleshootingIssue> issues = result.issues().stream().map(this::toApiIssue).toList();
     return new TroubleshootResponse(issues, operation, result.variables());
   }
