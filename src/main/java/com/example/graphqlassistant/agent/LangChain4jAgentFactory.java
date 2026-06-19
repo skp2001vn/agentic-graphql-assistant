@@ -12,7 +12,7 @@ import java.util.Objects;
 
 public final class LangChain4jAgentFactory {
 
-  public static final int MAX_TOOL_CALLING_ROUNDS = 4;
+  public static final int MAX_TOOL_CALLING_ROUNDS = GraphqlAssistantTools.MAX_TOOL_CALLS + 1;
 
   private static final String INVALID_TOOL_ARGUMENTS =
       "INVALID_TOOL_ARGUMENTS: use the declared typed tool input";
