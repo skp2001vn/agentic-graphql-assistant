@@ -9,7 +9,7 @@ Status: Implementation in progress
 - [x] Task 5 — Add bounded agents and GraphQL tool calling
 - [x] Task 6 — Generate GraphQL operations end to end
 - [x] Task 7 — Troubleshoot GraphQL operations end to end
-- [ ] Task 8 — Handle clarification and AI failure paths
+- [x] Task 8 — Handle clarification and AI failure paths
 - [ ] Task 9 — Add full-content agent and request logging safely
 - [ ] Task 10 — Publish OpenAPI and local usage documentation
 - [ ] Task 11 — Build deterministic and live Ollama evaluations

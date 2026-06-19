@@ -1,6 +1,8 @@
 package com.example.graphqlassistant.assistant;
 
 import com.example.graphqlassistant.agent.AssistantOrchestrator;
+import com.example.graphqlassistant.agent.ClarificationOutcome;
+import com.example.graphqlassistant.agent.ClarificationRequiredException;
 import com.example.graphqlassistant.agent.InvalidAgentResponseException;
 import com.example.graphqlassistant.agent.OrchestrationOutcome;
 import com.example.graphqlassistant.agent.SpecialistIssue;
@@ -17,6 +19,9 @@ import java.util.List;
 import java.util.Objects;
 
 public final class AssistantService {
+
+  private static final String CLARIFICATION_GUIDANCE =
+      "Specify what operation you want to generate or include the operation to troubleshoot.";
 
   private final AssistantOrchestrator orchestrator;
 
@@ -40,9 +45,17 @@ public final class AssistantService {
       if (findCause(exception, OutputParsingException.class) != null) {
         throw invalidResponse();
       }
+      InvalidAgentResponseException invalidResponse =
+          findCause(exception, InvalidAgentResponseException.class);
+      if (invalidResponse != null) {
+        throw invalidResponse;
+      }
       throw exception;
     }
 
+    if (outcome instanceof ClarificationOutcome) {
+      throw new ClarificationRequiredException(CLARIFICATION_GUIDANCE);
+    }
     if (!(outcome instanceof SpecialistOutcome specialist)) {
       throw invalidResponse();
     }

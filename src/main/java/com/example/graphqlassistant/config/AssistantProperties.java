@@ -37,6 +37,8 @@ public class AssistantProperties {
 
     private Duration requestTimeout = Duration.ofSeconds(60);
 
+    private Duration warmResponseTarget = Duration.ofSeconds(30);
+
     private final Ollama ollama = new Ollama();
 
     private final OpenAi openai = new OpenAi();
@@ -55,6 +57,14 @@ public class AssistantProperties {
 
     public void setRequestTimeout(Duration requestTimeout) {
       this.requestTimeout = requestTimeout;
+    }
+
+    public Duration getWarmResponseTarget() {
+      return warmResponseTarget;
+    }
+
+    public void setWarmResponseTarget(Duration warmResponseTarget) {
+      this.warmResponseTarget = warmResponseTarget;
     }
 
     public Ollama getOllama() {

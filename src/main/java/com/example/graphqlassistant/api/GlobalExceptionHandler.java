@@ -1,5 +1,8 @@
 package com.example.graphqlassistant.api;
 
+import com.example.graphqlassistant.agent.AgentExecutionException;
+import com.example.graphqlassistant.agent.AgentTimeoutException;
+import com.example.graphqlassistant.agent.ClarificationRequiredException;
 import com.example.graphqlassistant.agent.InvalidAgentResponseException;
 import com.example.graphqlassistant.provider.AiProviderException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,6 +21,17 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+  @ExceptionHandler(ClarificationRequiredException.class)
+  ResponseEntity<ApiError> handleClarificationRequired(
+      ClarificationRequiredException exception, HttpServletRequest request) {
+    return response(
+        HttpStatus.UNPROCESSABLE_CONTENT,
+        "CLARIFICATION_REQUIRED",
+        exception.getMessage(),
+        List.of(),
+        request);
+  }
+
   @ExceptionHandler(AiProviderException.class)
   ResponseEntity<ApiError> handleAiProviderException(
       AiProviderException exception, HttpServletRequest request) {
@@ -25,6 +39,28 @@ public class GlobalExceptionHandler {
         HttpStatus.BAD_GATEWAY,
         "AI_PROVIDER_ERROR",
         "The configured AI provider could not complete the request.",
+        List.of(),
+        request);
+  }
+
+  @ExceptionHandler(AgentTimeoutException.class)
+  ResponseEntity<ApiError> handleAgentTimeout(
+      AgentTimeoutException exception, HttpServletRequest request) {
+    return response(
+        HttpStatus.BAD_GATEWAY,
+        "AI_PROVIDER_ERROR",
+        "The configured AI provider could not complete the request.",
+        List.of(),
+        request);
+  }
+
+  @ExceptionHandler(AgentExecutionException.class)
+  ResponseEntity<ApiError> handleAgentExecution(
+      AgentExecutionException exception, HttpServletRequest request) {
+    return response(
+        HttpStatus.BAD_GATEWAY,
+        "AGENT_EXECUTION_ERROR",
+        "The assistant agent could not complete the request safely.",
         List.of(),
         request);
   }

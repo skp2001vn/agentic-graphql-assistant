@@ -66,7 +66,12 @@ public final class AssistantOrchestrator {
   }
 
   private OrchestrationOutcome handleWithinTimeout(String prompt) {
-    RoutingDecision decision = router.route(prompt);
+    RoutingDecision decision;
+    try {
+      decision = router.route(prompt);
+    } catch (RuntimeException exception) {
+      throw new AgentExecutionException("Assistant agent execution failed", exception);
+    }
     if (decision == null) {
       throw new InvalidAgentResponseException("Router returned an invalid decision");
     }
@@ -77,7 +82,12 @@ public final class AssistantOrchestrator {
 
     tools.beginToolTracking();
     try {
-      SpecialistResult result = specialistWorkflow.handle(prompt, decision.intent());
+      SpecialistResult result;
+      try {
+        result = specialistWorkflow.handle(prompt, decision.intent());
+      } catch (RuntimeException exception) {
+        throw new AgentExecutionException("Assistant agent execution failed", exception);
+      }
       if (decision.intent() == RoutingIntent.GENERATE && !tools.wasSchemaInspected()) {
         throw new InvalidAgentResponseException(
             "Generation specialist did not inspect the configured schema");

@@ -116,6 +116,19 @@ class AiProviderConfigurationTest {
   }
 
   @Test
+  void rejectsNonpositiveWarmResponseTarget() {
+    contextRunner
+        .withPropertyValues("assistant.ai.warm-response-target=0s")
+        .run(
+            context ->
+                assertThat(context)
+                    .hasFailed()
+                    .getFailure()
+                    .rootCause()
+                    .hasMessage("assistant.ai.warm-response-target must be positive"));
+  }
+
+  @Test
   void rejectsMissingSelectedOpenAiModelWithoutExposingTheKey(CapturedOutput output) {
     String apiKey = "sk-test-sensitive";
 

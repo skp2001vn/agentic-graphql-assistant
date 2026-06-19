@@ -19,6 +19,7 @@ public class AiProviderConfiguration {
   AssistantAiProvider assistantAiProvider(AssistantProperties properties) {
     AssistantProperties.Ai ai = properties.getAi();
     Duration timeout = requirePositive(ai.getRequestTimeout(), "assistant.ai.request-timeout");
+    requirePositive(ai.getWarmResponseTarget(), "assistant.ai.warm-response-target");
     String provider =
         requireNonBlank(ai.getProvider(), "assistant.ai.provider").toLowerCase(Locale.ROOT);
 
