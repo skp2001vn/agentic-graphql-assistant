@@ -1,5 +1,7 @@
 package com.example.graphqlassistant.api;
 
+import com.example.graphqlassistant.agent.InvalidAgentResponseException;
+import com.example.graphqlassistant.provider.AiProviderException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.List;
@@ -15,6 +17,28 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+  @ExceptionHandler(AiProviderException.class)
+  ResponseEntity<ApiError> handleAiProviderException(
+      AiProviderException exception, HttpServletRequest request) {
+    return response(
+        HttpStatus.BAD_GATEWAY,
+        "AI_PROVIDER_ERROR",
+        "The configured AI provider could not complete the request.",
+        List.of(),
+        request);
+  }
+
+  @ExceptionHandler(InvalidAgentResponseException.class)
+  ResponseEntity<ApiError> handleInvalidAgentResponse(
+      InvalidAgentResponseException exception, HttpServletRequest request) {
+    return response(
+        HttpStatus.BAD_GATEWAY,
+        "INVALID_AI_RESPONSE",
+        "The AI response did not satisfy the required contract.",
+        List.of(),
+        request);
+  }
 
   @ExceptionHandler(ApiException.class)
   ResponseEntity<ApiError> handleApiException(ApiException exception, HttpServletRequest request) {

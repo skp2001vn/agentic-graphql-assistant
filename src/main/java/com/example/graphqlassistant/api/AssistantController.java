@@ -1,5 +1,6 @@
 package com.example.graphqlassistant.api;
 
+import com.example.graphqlassistant.assistant.AssistantService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -16,13 +17,18 @@ public class AssistantController {
 
   static final int MAX_REQUEST_BYTES = 100 * 1024;
 
+  private final AssistantService assistantService;
+
+  public AssistantController(AssistantService assistantService) {
+    this.assistantService = assistantService;
+  }
+
   @PostMapping(
       path = "/assistant",
       consumes = MediaType.TEXT_PLAIN_VALUE,
       produces = MediaType.APPLICATION_JSON_VALUE)
   public AssistantResponse assist(HttpServletRequest request) {
-    readPrompt(request);
-    throw new IllegalStateException("Assistant processing is not available");
+    return assistantService.generate(readPrompt(request));
   }
 
   private String readPrompt(HttpServletRequest request) {
