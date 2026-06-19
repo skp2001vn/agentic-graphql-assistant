@@ -1,0 +1,1 @@
+{"id":"clarification-insufficient","category":"clarification","prompt":"Help me with GraphQL.","expectedIntent":"CLARIFICATION_REQUIRED","expectedError":"CLARIFICATION","transcript":[{"kind":"text","text":"{\"intent\":\"CLARIFICATION_REQUIRED\",\"reason\":\"The requested operation is not specified\",\"confidence\":1.0}"}]}

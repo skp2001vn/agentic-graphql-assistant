@@ -12,5 +12,5 @@ Status: Implementation in progress
 - [x] Task 8 — Handle clarification and AI failure paths
 - [x] Task 9 — Add full-content agent and request logging safely
 - [x] Task 10 — Publish OpenAPI and local usage documentation
-- [ ] Task 11 — Build deterministic and live Ollama evaluations
+- [x] Task 11 — Build deterministic and live Ollama evaluations
 - [ ] Task 12 — Complete final verification, GitHub publication, and readiness report

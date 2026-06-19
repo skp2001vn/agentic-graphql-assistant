@@ -3,7 +3,6 @@ package com.example.graphqlassistant.agent;
 import com.example.graphqlassistant.logging.AssistantRequestLogger;
 import com.example.graphqlassistant.tools.GraphqlAssistantTools;
 import com.example.graphqlassistant.tools.OperationValidationResult;
-import com.example.graphqlassistant.tools.ValidateOperationInput;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -126,7 +125,7 @@ public final class AssistantOrchestrator {
     }
     OperationValidationResult validation;
     try {
-      validation = tools.validateOperation(new ValidateOperationInput(result.operation()));
+      validation = tools.validateOperation(result.operation());
     } catch (IllegalArgumentException exception) {
       throw new InvalidAgentResponseException("Specialist returned an invalid result");
     }

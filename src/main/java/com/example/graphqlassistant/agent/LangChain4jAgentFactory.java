@@ -1,6 +1,8 @@
 package com.example.graphqlassistant.agent;
 
 import com.example.graphqlassistant.tools.GraphqlAssistantTools;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.langchain4j.agentic.AgenticServices;
 import dev.langchain4j.agentic.UntypedAgent;
 import dev.langchain4j.model.chat.ChatModel;
@@ -18,6 +20,8 @@ public final class LangChain4jAgentFactory {
   private static final String TOOL_EXECUTION_FAILED =
       "TOOL_EXECUTION_FAILED: correct the input or return a final response";
 
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
   private LangChain4jAgentFactory() {
     throw new AssertionError("No instances");
   }
@@ -30,32 +34,36 @@ public final class LangChain4jAgentFactory {
 
   public static GenerationAgent createGenerationAgent(
       ChatModel chatModel, GraphqlAssistantTools tools) {
-    GenerationAgent specialist =
+    GenerationToolAgent specialist =
         configureAgent(
-                AgenticServices.agentBuilder(GenerationAgent.class),
+                AgenticServices.agentBuilder(GenerationToolAgent.class),
                 Objects.requireNonNull(chatModel, "chatModel"),
                 Objects.requireNonNull(tools, "tools"))
-            .outputKey("generationResult")
+            .outputKey("generationJson")
             .build();
-    return AgenticServices.sequenceBuilder(GenerationAgent.class)
-        .subAgents(specialist)
-        .outputKey("generationResult")
-        .build();
+    GenerationToolAgent workflow =
+        AgenticServices.sequenceBuilder(GenerationToolAgent.class)
+            .subAgents(specialist)
+            .outputKey("generationJson")
+            .build();
+    return new ParsedGenerationAgent(workflow);
   }
 
   public static TroubleshootingAgent createTroubleshootingAgent(
       ChatModel chatModel, GraphqlAssistantTools tools) {
-    TroubleshootingAgent specialist =
+    TroubleshootingToolAgent specialist =
         configureAgent(
-                AgenticServices.agentBuilder(TroubleshootingAgent.class),
+                AgenticServices.agentBuilder(TroubleshootingToolAgent.class),
                 Objects.requireNonNull(chatModel, "chatModel"),
                 Objects.requireNonNull(tools, "tools"))
-            .outputKey("troubleshootingResult")
+            .outputKey("troubleshootingJson")
             .build();
-    return AgenticServices.sequenceBuilder(TroubleshootingAgent.class)
-        .subAgents(specialist)
-        .outputKey("troubleshootingResult")
-        .build();
+    TroubleshootingToolAgent workflow =
+        AgenticServices.sequenceBuilder(TroubleshootingToolAgent.class)
+            .subAgents(specialist)
+            .outputKey("troubleshootingJson")
+            .build();
+    return new ParsedTroubleshootingAgent(workflow);
   }
 
   public static SpecialistWorkflow createSpecialistWorkflow(
@@ -99,5 +107,13 @@ public final class LangChain4jAgentFactory {
             (error, context) -> ToolErrorHandlerResult.text(INVALID_TOOL_ARGUMENTS))
         .toolExecutionErrorHandler(
             (error, context) -> ToolErrorHandlerResult.text(TOOL_EXECUTION_FAILED));
+  }
+
+  static SpecialistResult parseSpecialistResult(String json) {
+    try {
+      return OBJECT_MAPPER.readValue(json, SpecialistResult.class);
+    } catch (JsonProcessingException | RuntimeException exception) {
+      throw new InvalidAgentResponseException("Specialist returned invalid structured output");
+    }
   }
 }

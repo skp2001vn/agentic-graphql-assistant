@@ -236,8 +236,8 @@ bounded, no chat history is retained, and no generated operation is executed.
 | `./mvnw verify` | Run the complete offline verification gate |
 | `./mvnw clean package` | Build the application JAR |
 
-Evaluation design and commands are documented in [EVALS.md](EVALS.md). Task 11
-adds the executable datasets and Maven profiles described there.
+Evaluation datasets, scoring, reports, and commands are documented in
+[EVALS.md](EVALS.md).
 
 ## Troubleshooting
 

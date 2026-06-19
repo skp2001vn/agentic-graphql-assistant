@@ -2,8 +2,7 @@
 
 The evaluation strategy has two modes: an offline deterministic suite for the
 normal build and an explicit live Ollama suite for model-quality and latency
-measurement. Task 11 adds the executable dataset, scoring harness, and Maven
-profiles described below.
+measurement.
 
 ## What the evaluations cover
 
@@ -41,6 +40,11 @@ live Ollama service nor an OpenAI account. They are designed to run as part of
 Use this suite for every implementation or prompt change. A deterministic
 failure is a release blocker.
 
+The suite writes `target/evals/deterministic-report.json`. The report contains
+the stable case ID and category, normalized output, tool calls with complete
+inputs and outputs, raw model transcript, latency, hard failures, and aggregate
+pass rate.
+
 ## Live Ollama evaluations
 
 Prepare the default model:
@@ -58,8 +62,15 @@ Make sure Ollama is reachable at `http://localhost:11434`, then run:
 
 The live suite performs real generation and troubleshooting requests with
 `qwen3:8b`. It records each case's output, tool trace, latency, pass/fail
-reason, and aggregate score. It is intentionally excluded from the offline
-build because model availability, model output, and local hardware vary.
+reason, and aggregate score in `target/evals/live-ollama-report.json`. It is
+intentionally excluded from the offline build because model availability,
+model output, and local hardware vary.
+
+For focused debugging, select one live case by ID:
+
+```bash
+./mvnw test -Pevals-live -Deval.case=live-generation-list-countries
+```
 
 Live readiness targets are:
 
@@ -86,7 +97,17 @@ invented schema fields, incomplete troubleshooting issue coverage, or a result
 that differs from the final Java validation outcome.
 
 Model-based judging may supplement deterministic grading for semantic quality,
-but it never overrides hard contract or GraphQL-validation failures.
+but it never overrides hard contract or GraphQL-validation failures. The
+current harness records a null judge score because all initial cases have
+deterministic hard checks; a future judge can fill that field without changing
+pass/fail precedence.
+
+## Dataset format
+
+The JSON Lines files under `src/test/resources/evals/` are versioned inputs.
+Each case has a stable ID, category, prompt, expected intent, hard expectations,
+and, for offline cases, a fake provider transcript. Keep case ordering stable
+so reports remain easy to compare across prompt or tool changes.
 
 ## Interpreting failures
 

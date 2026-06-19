@@ -196,7 +196,7 @@ class AssistantLoggingTest {
                         ToolExecutionRequest.builder()
                             .id("inspect-country")
                             .name("inspectSchema")
-                            .arguments("{\"input\":{\"typeNames\":[\"Country\"]}}")
+                            .arguments("{\"typeNames\":[\"Country\"]}")
                             .build()))
                 .build();
         case 2 ->

@@ -39,8 +39,7 @@ class GraphqlAssistantToolsTest {
 
   @Test
   void inspectsRootOperationsAndRequestedTypes() {
-    SchemaInspectionResult result =
-        tools.inspectSchema(new InspectSchemaInput(List.of("Country", "CountryFilter")));
+    SchemaInspectionResult result = tools.inspectSchema(List.of("Country", "CountryFilter"));
 
     assertThat(result.types())
         .extracting(TypeSummary::name)
@@ -60,25 +59,31 @@ class GraphqlAssistantToolsTest {
   @Test
   void validatesOperationsAgainstTheConfiguredSchema() {
     OperationValidationResult valid =
-        tools.validateOperation(
-            new ValidateOperationInput(
-                "query Country($code: ID!) { country(code: $code) { name } }"));
+        tools.validateOperation("query Country($code: ID!) { country(code: $code) { name } }");
     OperationValidationResult invalid =
-        tools.validateOperation(
-            new ValidateOperationInput("query Country { country(code: \"CA\") { missing } }"));
+        tools.validateOperation("query Country { country(code: \"CA\") { missing } }");
 
     assertThat(valid.valid()).isTrue();
     assertThat(valid.diagnostics()).isEmpty();
     assertThat(invalid.valid()).isFalse();
     assertThat(invalid.diagnostics())
         .extracting(OperationDiagnostic::code)
-        .contains("FieldUndefined");
+        .contains("FieldUndefined", "LiteralArgument");
+  }
+
+  @Test
+  void reportsAssistantContractViolations() {
+    OperationValidationResult result = tools.validateOperation("{ countries { code name } }");
+
+    assertThat(result.valid()).isFalse();
+    assertThat(result.diagnostics())
+        .extracting(OperationDiagnostic::code)
+        .containsExactly("OperationNameRequired");
   }
 
   @Test
   void reportsSyntaxErrorsAsStructuredDiagnostics() {
-    OperationValidationResult result =
-        tools.validateOperation(new ValidateOperationInput("query Broken { country("));
+    OperationValidationResult result = tools.validateOperation("query Broken { country(");
 
     assertThat(result.valid()).isFalse();
     assertThat(result.diagnostics())
@@ -95,8 +100,7 @@ class GraphqlAssistantToolsTest {
   @Test
   void formatsOperationsCanonically() {
     OperationFormattingResult result =
-        tools.formatOperation(
-            new FormatOperationInput("query Country($code:ID!){country(code:$code){code name}}"));
+        tools.formatOperation("query Country($code:ID!){country(code:$code){code name}}");
 
     assertThat(result.formattedOperation())
         .isEqualTo(

@@ -4,6 +4,7 @@ import com.example.graphqlassistant.logging.AssistantRequestLogger;
 import com.example.graphqlassistant.schema.GraphqlSchemaContext;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
+import java.util.List;
 import java.util.Objects;
 
 public final class GraphqlAssistantTools {
@@ -45,7 +46,8 @@ public final class GraphqlAssistantTools {
 
   @Tool("Inspect configured GraphQL root operations and requested type definitions")
   public SchemaInspectionResult inspectSchema(
-      @P("Validated type names to inspect; roots are always included") InspectSchemaInput input) {
+      @P("Type names to inspect; roots are always included") List<String> typeNames) {
+    InspectSchemaInput input = new InspectSchemaInput(typeNames);
     SchemaInspectionResult result =
         requestLogger.toolCall("inspectSchema", input, () -> schemaInspection.inspect(input));
     schemaInspected.set(true);
@@ -54,14 +56,16 @@ public final class GraphqlAssistantTools {
 
   @Tool("Parse and validate a GraphQL operation against the configured schema")
   public OperationValidationResult validateOperation(
-      @P("GraphQL operation to validate") ValidateOperationInput input) {
+      @P("GraphQL operation to validate") String operation) {
+    ValidateOperationInput input = new ValidateOperationInput(operation);
     return requestLogger.toolCall(
         "validateOperation", input, () -> operationValidation.validate(input));
   }
 
   @Tool("Parse and return a canonically formatted GraphQL operation")
   public OperationFormattingResult formatOperation(
-      @P("GraphQL operation to format") FormatOperationInput input) {
+      @P("GraphQL operation to format") String operation) {
+    FormatOperationInput input = new FormatOperationInput(operation);
     return requestLogger.toolCall(
         "formatOperation", input, () -> operationFormatting.format(input));
   }

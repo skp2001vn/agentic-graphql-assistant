@@ -53,23 +53,20 @@ class TroubleshootingServiceTest {
                         {"intent":"TROUBLESHOOT","reason":"Existing operation supplied","confidence":0.99}
                         """);
                 case 2 ->
-                    toolCall(
-                        "inspect-country",
-                        "inspectSchema",
-                        "{\"input\":{\"typeNames\":[\"Country\"]}}");
+                    toolCall("inspect-country", "inspectSchema", "{\"typeNames\":[\"Country\"]}");
                 case 3 ->
                     toolCall(
                         "validate-correction",
                         "validateOperation",
                         """
-                        {"input":{"operation":"query ListCountries { countries { code name } }"}}
+                        {"operation":"query ListCountries { countries { code name } }"}
                         """);
                 case 4 ->
                     toolCall(
                         "format-correction",
                         "formatOperation",
                         """
-                        {"input":{"operation":"query ListCountries { countries { code name } }"}}
+                        {"operation":"query ListCountries { countries { code name } }"}
                         """);
                 case 5 ->
                     response(
