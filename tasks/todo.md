@@ -7,7 +7,7 @@ Status: Implementation in progress
 - [x] Task 3 — Establish API models, error handling, and request boundaries
 - [x] Task 4 — Implement LangChain4j provider selection and configuration
 - [x] Task 5 — Add bounded agents and GraphQL tool calling
-- [ ] Task 6 — Generate GraphQL operations end to end
+- [x] Task 6 — Generate GraphQL operations end to end
 - [ ] Task 7 — Troubleshoot GraphQL operations end to end
 - [ ] Task 8 — Handle clarification and AI failure paths
 - [ ] Task 9 — Add full-content agent and request logging safely

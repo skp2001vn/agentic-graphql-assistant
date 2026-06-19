@@ -75,17 +75,30 @@ public final class AssistantOrchestrator {
       return new ClarificationOutcome(decision);
     }
 
-    SpecialistResult result = specialistWorkflow.handle(prompt, decision.intent());
-    validateSpecialistResult(result);
-    return new SpecialistOutcome(decision, result);
+    tools.beginToolTracking();
+    try {
+      SpecialistResult result = specialistWorkflow.handle(prompt, decision.intent());
+      if (decision.intent() == RoutingIntent.GENERATE && !tools.wasSchemaInspected()) {
+        throw new InvalidAgentResponseException(
+            "Generation specialist did not inspect the configured schema");
+      }
+      validateSpecialistResult(result);
+      return new SpecialistOutcome(decision, result);
+    } finally {
+      tools.clearToolTracking();
+    }
   }
 
   private void validateSpecialistResult(SpecialistResult result) {
     if (result == null) {
       throw new InvalidAgentResponseException("Specialist returned an invalid result");
     }
-    OperationValidationResult validation =
-        tools.validateOperation(new ValidateOperationInput(result.operation()));
+    OperationValidationResult validation;
+    try {
+      validation = tools.validateOperation(new ValidateOperationInput(result.operation()));
+    } catch (IllegalArgumentException exception) {
+      throw new InvalidAgentResponseException("Specialist returned an invalid result");
+    }
     if (!validation.valid()) {
       throw new InvalidAgentResponseException(
           "The specialist returned an invalid GraphQL operation");

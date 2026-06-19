@@ -6,7 +6,9 @@ import com.example.graphqlassistant.agent.GenerationAgent;
 import com.example.graphqlassistant.agent.LangChain4jAgentFactory;
 import com.example.graphqlassistant.agent.SpecialistWorkflow;
 import com.example.graphqlassistant.agent.TroubleshootingAgent;
+import com.example.graphqlassistant.assistant.AssistantService;
 import com.example.graphqlassistant.provider.AssistantAiProvider;
+import com.example.graphqlassistant.schema.GraphqlOperationProcessor;
 import com.example.graphqlassistant.schema.GraphqlSchemaContext;
 import com.example.graphqlassistant.tools.GraphqlAssistantTools;
 import org.springframework.context.annotation.Bean;
@@ -57,5 +59,16 @@ public class AgentConfiguration {
         graphqlAssistantTools,
         properties.getAi().getRequestTimeout(),
         MINIMUM_ROUTING_CONFIDENCE);
+  }
+
+  @Bean
+  GraphqlOperationProcessor graphqlOperationProcessor(GraphqlSchemaContext schemaContext) {
+    return new GraphqlOperationProcessor(schemaContext);
+  }
+
+  @Bean
+  AssistantService assistantService(
+      AssistantOrchestrator orchestrator, GraphqlOperationProcessor operationProcessor) {
+    return new AssistantService(orchestrator, operationProcessor);
   }
 }

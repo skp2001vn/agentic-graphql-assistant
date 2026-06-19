@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.graphqlassistant.schema.GraphqlSchemaContext;
 import com.example.graphqlassistant.tools.GraphqlAssistantTools;
+import com.example.graphqlassistant.tools.InspectSchemaInput;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
@@ -212,7 +213,7 @@ class AssistantOrchestratorTest {
         chatModel(
             chatRequest -> {
               request.set(chatRequest);
-              return response("{\"operation\":\"query Greeting { greeting }\"}");
+              return response(generationResult("query Greeting { greeting }"));
             });
 
     SpecialistResult result =
@@ -234,7 +235,7 @@ class AssistantOrchestratorTest {
             chatRequest -> {
               modelCalls.incrementAndGet();
               request.set(chatRequest);
-              return response("{\"operation\":\"query Greeting { greeting }\"}");
+              return response(generationResult("query Greeting { greeting }"));
             });
     GenerationAgent generationAgent = LangChain4jAgentFactory.createGenerationAgent(model, tools);
     TroubleshootingAgent troubleshootingAgent =
@@ -247,7 +248,7 @@ class AssistantOrchestratorTest {
     assertThat(result.operation()).isEqualTo("query Greeting { greeting }");
     assertThat(modelCalls).hasValue(1);
     assertThat(request.get().messages().toString())
-        .contains("Generate exactly one GraphQL operation");
+        .contains("Generate exactly one named GraphQL query or mutation");
   }
 
   @Test
@@ -296,7 +297,7 @@ class AssistantOrchestratorTest {
                   .map(ToolExecutionResultMessage::text)
                   .findFirst()
                   .ifPresent(toolError::set);
-              return response("{\"operation\":\"query Greeting { greeting }\"}");
+              return response(generationResult("query Greeting { greeting }"));
             });
 
     SpecialistResult result =
@@ -310,11 +311,26 @@ class AssistantOrchestratorTest {
 
   private AssistantOrchestrator orchestrator(
       AssistantRouter router, SpecialistWorkflow specialistWorkflow) {
-    return new AssistantOrchestrator(router, specialistWorkflow, tools, Duration.ofSeconds(1), 0.7);
+    SpecialistWorkflow schemaGroundedWorkflow =
+        (prompt, intent) -> {
+          if (intent == RoutingIntent.GENERATE) {
+            tools.inspectSchema(new InspectSchemaInput(List.of()));
+          }
+          return specialistWorkflow.handle(prompt, intent);
+        };
+    return new AssistantOrchestrator(
+        router, schemaGroundedWorkflow, tools, Duration.ofSeconds(1), 0.7);
   }
 
   private static ChatResponse response(String text) {
     return ChatResponse.builder().aiMessage(AiMessage.from(text)).build();
+  }
+
+  private static String generationResult(String operation) {
+    return """
+        {"intent":"GENERATE","operation":"%s","variables":{}}
+        """
+        .formatted(operation);
   }
 
   private static ChatModel chatModel(Function<ChatRequest, ChatResponse> response) {

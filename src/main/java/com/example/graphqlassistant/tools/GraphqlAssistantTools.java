@@ -13,6 +13,8 @@ public final class GraphqlAssistantTools {
 
   private final OperationFormattingTool operationFormatting;
 
+  private final ThreadLocal<Boolean> schemaInspected = ThreadLocal.withInitial(() -> false);
+
   private GraphqlAssistantTools(
       SchemaInspectionTool schemaInspection,
       OperationValidationTool operationValidation,
@@ -33,7 +35,9 @@ public final class GraphqlAssistantTools {
   @Tool("Inspect configured GraphQL root operations and requested type definitions")
   public SchemaInspectionResult inspectSchema(
       @P("Validated type names to inspect; roots are always included") InspectSchemaInput input) {
-    return schemaInspection.inspect(input);
+    SchemaInspectionResult result = schemaInspection.inspect(input);
+    schemaInspected.set(true);
+    return result;
   }
 
   @Tool("Parse and validate a GraphQL operation against the configured schema")
@@ -46,5 +50,17 @@ public final class GraphqlAssistantTools {
   public OperationFormattingResult formatOperation(
       @P("GraphQL operation to format") FormatOperationInput input) {
     return operationFormatting.format(input);
+  }
+
+  public void beginToolTracking() {
+    schemaInspected.set(false);
+  }
+
+  public boolean wasSchemaInspected() {
+    return schemaInspected.get();
+  }
+
+  public void clearToolTracking() {
+    schemaInspected.remove();
   }
 }
