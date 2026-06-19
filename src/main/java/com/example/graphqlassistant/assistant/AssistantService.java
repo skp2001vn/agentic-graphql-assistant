@@ -12,8 +12,11 @@ import com.example.graphqlassistant.api.AssistantResponse;
 import com.example.graphqlassistant.api.GenerateResponse;
 import com.example.graphqlassistant.api.TroubleshootResponse;
 import com.example.graphqlassistant.api.TroubleshootingIssue;
+import com.example.graphqlassistant.logging.AssistantRequestLogger;
 import com.example.graphqlassistant.provider.AiProviderException;
+import com.example.graphqlassistant.provider.AssistantAiProvider;
 import com.example.graphqlassistant.schema.GraphqlOperationProcessor;
+import com.example.graphqlassistant.schema.GraphqlSchemaContext;
 import dev.langchain4j.service.output.OutputParsingException;
 import java.util.List;
 import java.util.Objects;
@@ -27,13 +30,35 @@ public final class AssistantService {
 
   private final GraphqlOperationProcessor operationProcessor;
 
+  private final AssistantRequestLogger requestLogger;
+
+  private final AssistantAiProvider provider;
+
+  private final GraphqlSchemaContext schemaContext;
+
   public AssistantService(
       AssistantOrchestrator orchestrator, GraphqlOperationProcessor operationProcessor) {
+    this(orchestrator, operationProcessor, AssistantRequestLogger.disabled(), null, null);
+  }
+
+  public AssistantService(
+      AssistantOrchestrator orchestrator,
+      GraphqlOperationProcessor operationProcessor,
+      AssistantRequestLogger requestLogger,
+      AssistantAiProvider provider,
+      GraphqlSchemaContext schemaContext) {
     this.orchestrator = Objects.requireNonNull(orchestrator, "orchestrator");
     this.operationProcessor = Objects.requireNonNull(operationProcessor, "operationProcessor");
+    this.requestLogger = Objects.requireNonNull(requestLogger, "requestLogger");
+    this.provider = provider;
+    this.schemaContext = schemaContext;
   }
 
   public AssistantResponse assist(String prompt) {
+    if (provider != null && schemaContext != null) {
+      requestLogger.requestStarted(
+          provider.providerName(), provider.modelName(), schemaContext.schemaText(), prompt);
+    }
     OrchestrationOutcome outcome;
     try {
       outcome = orchestrator.handle(prompt);
@@ -66,11 +91,14 @@ public final class AssistantService {
     }
 
     String operation = operationProcessor.process(result.operation(), result.variables());
-    return switch (result.intent()) {
-      case GENERATE -> generateResponse(result, operation);
-      case TROUBLESHOOT -> troubleshootResponse(result, operation);
-      case CLARIFICATION_REQUIRED -> throw invalidResponse();
-    };
+    AssistantResponse response =
+        switch (result.intent()) {
+          case GENERATE -> generateResponse(result, operation);
+          case TROUBLESHOOT -> troubleshootResponse(result, operation);
+          case CLARIFICATION_REQUIRED -> throw invalidResponse();
+        };
+    requestLogger.normalizedResponse(response);
+    return response;
   }
 
   private GenerateResponse generateResponse(SpecialistResult result, String operation) {

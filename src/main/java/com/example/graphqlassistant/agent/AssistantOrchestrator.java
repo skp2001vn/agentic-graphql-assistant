@@ -1,5 +1,6 @@
 package com.example.graphqlassistant.agent;
 
+import com.example.graphqlassistant.logging.AssistantRequestLogger;
 import com.example.graphqlassistant.tools.GraphqlAssistantTools;
 import com.example.graphqlassistant.tools.OperationValidationResult;
 import com.example.graphqlassistant.tools.ValidateOperationInput;
@@ -22,12 +23,30 @@ public final class AssistantOrchestrator {
 
   private final double minimumRoutingConfidence;
 
+  private final AssistantRequestLogger requestLogger;
+
   public AssistantOrchestrator(
       AssistantRouter router,
       SpecialistWorkflow specialistWorkflow,
       GraphqlAssistantTools tools,
       Duration timeout,
       double minimumRoutingConfidence) {
+    this(
+        router,
+        specialistWorkflow,
+        tools,
+        timeout,
+        minimumRoutingConfidence,
+        AssistantRequestLogger.disabled());
+  }
+
+  public AssistantOrchestrator(
+      AssistantRouter router,
+      SpecialistWorkflow specialistWorkflow,
+      GraphqlAssistantTools tools,
+      Duration timeout,
+      double minimumRoutingConfidence,
+      AssistantRequestLogger requestLogger) {
     this.router = Objects.requireNonNull(router, "router");
     this.specialistWorkflow = Objects.requireNonNull(specialistWorkflow, "specialistWorkflow");
     this.tools = Objects.requireNonNull(tools, "tools");
@@ -38,6 +57,7 @@ public final class AssistantOrchestrator {
       throw new IllegalArgumentException("minimumRoutingConfidence must be between 0 and 1");
     }
     this.minimumRoutingConfidence = minimumRoutingConfidence;
+    this.requestLogger = Objects.requireNonNull(requestLogger, "requestLogger");
   }
 
   public OrchestrationOutcome handle(String prompt) {
@@ -75,6 +95,7 @@ public final class AssistantOrchestrator {
     if (decision == null) {
       throw new InvalidAgentResponseException("Router returned an invalid decision");
     }
+    requestLogger.agentSelected(decision.intent());
     if (decision.intent() == RoutingIntent.CLARIFICATION_REQUIRED
         || decision.confidence() < minimumRoutingConfidence) {
       return new ClarificationOutcome(decision);
