@@ -1,6 +1,25 @@
 package com.example.graphqlassistant.api;
 
+import static com.example.graphqlassistant.config.OpenApiConfiguration.AGENT_EXECUTION_ERROR;
+import static com.example.graphqlassistant.config.OpenApiConfiguration.AI_PROVIDER_ERROR;
+import static com.example.graphqlassistant.config.OpenApiConfiguration.CLARIFICATION_REQUIRED;
+import static com.example.graphqlassistant.config.OpenApiConfiguration.GENERATE_REQUEST;
+import static com.example.graphqlassistant.config.OpenApiConfiguration.GENERATE_RESPONSE;
+import static com.example.graphqlassistant.config.OpenApiConfiguration.INTERNAL_ERROR;
+import static com.example.graphqlassistant.config.OpenApiConfiguration.INVALID_AI_RESPONSE;
+import static com.example.graphqlassistant.config.OpenApiConfiguration.INVALID_REQUEST;
+import static com.example.graphqlassistant.config.OpenApiConfiguration.REQUEST_TOO_LARGE;
+import static com.example.graphqlassistant.config.OpenApiConfiguration.TROUBLESHOOT_RESPONSE;
+import static com.example.graphqlassistant.config.OpenApiConfiguration.UNSUPPORTED_MEDIA_TYPE;
+
 import com.example.graphqlassistant.assistant.AssistantService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -27,6 +46,88 @@ public class AssistantController {
       path = "/assistant",
       consumes = MediaType.TEXT_PLAIN_VALUE,
       produces = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(
+      summary = "Generate or troubleshoot a GraphQL operation",
+      description =
+          "Routes a natural-language prompt to a bounded generation or troubleshooting agent.",
+      requestBody =
+          @RequestBody(
+              required = true,
+              description = "A nonblank UTF-8 prompt no larger than 100 KB.",
+              content =
+                  @Content(
+                      mediaType = MediaType.TEXT_PLAIN_VALUE,
+                      schema = @Schema(type = "string"),
+                      examples = @ExampleObject(name = "generate", value = GENERATE_REQUEST))))
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "Generated or corrected GraphQL operation",
+        content =
+            @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema = @Schema(oneOf = {GenerateResponse.class, TroubleshootResponse.class}),
+                examples = {
+                  @ExampleObject(name = "generate", value = GENERATE_RESPONSE),
+                  @ExampleObject(name = "troubleshoot", value = TROUBLESHOOT_RESPONSE)
+                })),
+    @ApiResponse(
+        responseCode = "400",
+        description = "Empty or malformed request",
+        content =
+            @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema = @Schema(implementation = ApiError.class),
+                examples = @ExampleObject(name = "invalidRequest", value = INVALID_REQUEST))),
+    @ApiResponse(
+        responseCode = "413",
+        description = "Request body exceeds 100 KB",
+        content =
+            @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema = @Schema(implementation = ApiError.class),
+                examples = @ExampleObject(name = "requestTooLarge", value = REQUEST_TOO_LARGE))),
+    @ApiResponse(
+        responseCode = "415",
+        description = "Content type is not UTF-8 text/plain",
+        content =
+            @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema = @Schema(implementation = ApiError.class),
+                examples =
+                    @ExampleObject(name = "unsupportedMediaType", value = UNSUPPORTED_MEDIA_TYPE))),
+    @ApiResponse(
+        responseCode = "422",
+        description = "Prompt is ambiguous or insufficient",
+        content =
+            @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema = @Schema(implementation = ApiError.class),
+                examples =
+                    @ExampleObject(
+                        name = "clarificationRequired",
+                        value = CLARIFICATION_REQUIRED))),
+    @ApiResponse(
+        responseCode = "500",
+        description = "Unexpected internal failure",
+        content =
+            @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema = @Schema(implementation = ApiError.class),
+                examples = @ExampleObject(name = "internalError", value = INTERNAL_ERROR))),
+    @ApiResponse(
+        responseCode = "502",
+        description = "AI provider, model response, or bounded agent execution failure",
+        content =
+            @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema = @Schema(implementation = ApiError.class),
+                examples = {
+                  @ExampleObject(name = "aiProviderError", value = AI_PROVIDER_ERROR),
+                  @ExampleObject(name = "invalidAiResponse", value = INVALID_AI_RESPONSE),
+                  @ExampleObject(name = "agentExecutionError", value = AGENT_EXECUTION_ERROR)
+                }))
+  })
   public AssistantResponse assist(HttpServletRequest request) {
     return assistantService.assist(readPrompt(request));
   }
