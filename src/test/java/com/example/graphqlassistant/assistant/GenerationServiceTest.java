@@ -62,7 +62,7 @@ class GenerationServiceTest {
                                 ToolExecutionRequest.builder()
                                     .id("inspect-country")
                                     .name("inspectSchema")
-                                    .arguments("{\"input\":{\"typeNames\":[\"Country\"]}}")
+                                    .arguments("{\"typeNames\":[\"Country\"]}")
                                     .build()))
                         .build();
                 case 3 ->
@@ -305,7 +305,7 @@ class GenerationServiceTest {
                 ToolExecutionRequest.builder()
                     .id("inspect-country")
                     .name("inspectSchema")
-                    .arguments("{\"input\":{\"typeNames\":[\"Country\"]}}")
+                    .arguments("{\"typeNames\":[\"Country\"]}")
                     .build()))
         .build();
   }

@@ -53,6 +53,8 @@ public class AiProviderConfiguration {
             .baseUrl(baseUrl)
             .modelName(model)
             .timeout(timeout)
+            .temperature(0.0)
+            .think(false)
             .maxRetries(0)
             .logRequests(false)
             .logResponses(false)

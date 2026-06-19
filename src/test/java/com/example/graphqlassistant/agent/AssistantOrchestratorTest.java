@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.graphqlassistant.schema.GraphqlSchemaContext;
 import com.example.graphqlassistant.tools.GraphqlAssistantTools;
-import com.example.graphqlassistant.tools.InspectSchemaInput;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
@@ -224,6 +223,10 @@ class AssistantOrchestratorTest {
     assertThat(request.get().toolSpecifications())
         .extracting(specification -> specification.name())
         .containsExactlyInAnyOrder("inspectSchema", "validateOperation", "formatOperation");
+    assertThat(request.get().messages().toString()).contains("multi-turn tool loop");
+    assertThat(request.get().messages().toString()).contains("MUST use a declared variable");
+    assertThat(request.get().messages().toString())
+        .doesNotContain("You must answer strictly in the following JSON format");
   }
 
   @Test
@@ -262,7 +265,7 @@ class AssistantOrchestratorTest {
                   ToolExecutionRequest.builder()
                       .id("inspect-" + call)
                       .name("inspectSchema")
-                      .arguments("{\"input\":{\"typeNames\":[]}}")
+                      .arguments("{\"typeNames\":[]}")
                       .build();
               return ChatResponse.builder().aiMessage(AiMessage.from(toolRequest)).build();
             });
@@ -287,7 +290,7 @@ class AssistantOrchestratorTest {
                     ToolExecutionRequest.builder()
                         .id("inspect-invalid")
                         .name("inspectSchema")
-                        .arguments("{\"input\":{\"typeNames\":[\"not a GraphQL name\"]}}")
+                        .arguments("{\"typeNames\":[\"not a GraphQL name\"]}")
                         .build();
                 return ChatResponse.builder().aiMessage(AiMessage.from(toolRequest)).build();
               }
@@ -306,7 +309,7 @@ class AssistantOrchestratorTest {
 
     assertThat(result.operation()).isEqualTo("query Greeting { greeting }");
     assertThat(toolError.get())
-        .isEqualTo("INVALID_TOOL_ARGUMENTS: use the declared typed tool input");
+        .isEqualTo("TOOL_EXECUTION_FAILED: correct the input or return a final response");
   }
 
   private AssistantOrchestrator orchestrator(
@@ -314,7 +317,7 @@ class AssistantOrchestratorTest {
     SpecialistWorkflow schemaGroundedWorkflow =
         (prompt, intent) -> {
           if (intent == RoutingIntent.GENERATE) {
-            tools.inspectSchema(new InspectSchemaInput(List.of()));
+            tools.inspectSchema(List.of());
           }
           return specialistWorkflow.handle(prompt, intent);
         };

@@ -29,6 +29,8 @@ class AiProviderConfigurationTest {
           assertThat(provider.providerName()).isEqualTo("ollama");
           assertThat(provider.modelName()).isEqualTo("qwen3:8b");
           assertThat(provider.defaultRequestParameters().modelName()).isEqualTo("qwen3:8b");
+          assertThat(provider.defaultRequestParameters().temperature()).isEqualTo(0.0);
+          assertThat(provider.supportedCapabilities()).isEmpty();
           assertThat(properties.getAi().getOllama().getBaseUrl())
               .isEqualTo("http://localhost:11434");
         });
