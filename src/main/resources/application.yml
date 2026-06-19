@@ -8,6 +8,7 @@ assistant:
   ai:
     provider: ollama
     request-timeout: 60s
+    warm-response-target: 30s
     ollama:
       base-url: http://localhost:11434
       model: qwen3:8b
