@@ -258,7 +258,8 @@ Dependencies: Tasks 2–5
 ### Outcome
 
 Support natural-language generation prompts from HTTP request through model
-interaction to a validated, pretty-printed `GENERATE` response.
+interaction to a validated `GENERATE` response containing a pretty-printed
+operation as an array of formatted lines.
 
 ### Likely files
 
@@ -282,7 +283,7 @@ interaction to a validated, pretty-printed `GENERATE` response.
   schema.
 - Argument values use variables when practical.
 - Returned operations parse, validate against the loaded schema, and are
-  consistently pretty-printed.
+  consistently pretty-printed as arrays containing one line per element.
 - Invalid, incomplete, contradictory, or non-schema-valid model output returns
   `502 INVALID_AI_RESPONSE`.
 - Provider failures return `502 AI_PROVIDER_ERROR`.
@@ -322,8 +323,8 @@ AI-identified issues plus the corrected operation.
   suggestion, a complete corrected operation, and variables.
 - The corrected operation preserves the submitted operation's purpose while
   applying the identified fixes.
-- The corrected operation is named, parsed, schema-validated, and
-  pretty-printed before return.
+- The corrected operation is named, parsed, schema-validated, and returned as a
+  pretty-printed array containing one line per element.
 - Empty issue lists, missing corrections, and invalid corrected operations
   produce `502 INVALID_AI_RESPONSE`.
 - Multiple-issue troubleshooting is covered by deterministic tests.

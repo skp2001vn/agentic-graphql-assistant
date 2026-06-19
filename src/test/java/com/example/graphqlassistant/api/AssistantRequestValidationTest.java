@@ -119,13 +119,24 @@ class AssistantRequestValidationTest {
     Map<String, Object> variables = new HashMap<>();
     variables.put("code", null);
     GenerateResponse response =
-        new GenerateResponse("query ListCountries { countries { code } }", variables);
+        new GenerateResponse(
+            """
+            query ListCountries {
+              countries {
+                code
+              }
+            }
+            """
+                .strip(),
+            variables);
 
     JsonNode json = objectMapper.valueToTree(response);
 
     assertThat(json.path("intent").asString()).isEqualTo("GENERATE");
-    assertThat(json.path("query").asString())
-        .isEqualTo("query ListCountries { countries { code } }");
+    assertThat(json.path("query").isArray()).isTrue();
+    assertThat(json.path("query").path(0).asString()).isEqualTo("query ListCountries {");
+    assertThat(json.path("query").path(1).asString()).isEqualTo("  countries {");
+    assertThat(json.path("query").path(4).asString()).isEqualTo("}");
     assertThat(json.path("variables").path("code").isNull()).isTrue();
   }
 
@@ -136,7 +147,14 @@ class AssistantRequestValidationTest {
             List.of(
                 new TroubleshootingIssue(
                     "Unknown field", "The schema has no such field.", "Use name instead.")),
-            "query ListCountries { countries { name } }",
+            """
+            query ListCountries {
+              countries {
+                name
+              }
+            }
+            """
+                .strip(),
             Map.of());
 
     JsonNode json = objectMapper.valueToTree(response);
@@ -147,8 +165,10 @@ class AssistantRequestValidationTest {
         .isEqualTo("The schema has no such field.");
     assertThat(json.path("issues").path(0).path("suggestion").asString())
         .isEqualTo("Use name instead.");
-    assertThat(json.path("correctedQuery").asString())
-        .isEqualTo("query ListCountries { countries { name } }");
+    assertThat(json.path("correctedQuery").isArray()).isTrue();
+    assertThat(json.path("correctedQuery").path(0).asString()).isEqualTo("query ListCountries {");
+    assertThat(json.path("correctedQuery").path(1).asString()).isEqualTo("  countries {");
+    assertThat(json.path("correctedQuery").path(4).asString()).isEqualTo("}");
     assertThat(json.path("variables").isObject()).isTrue();
   }
 }

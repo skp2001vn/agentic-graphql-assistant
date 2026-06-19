@@ -165,8 +165,8 @@ class. The design should remain small and task-oriented.
   and `GetCountry`.
 - GraphQL argument values use variables instead of being embedded in the
   operation when practical.
-- GraphQL operations are consistently pretty-printed with line breaks and
-  two-space indentation before being placed in the JSON response.
+- GraphQL operations are consistently pretty-printed with two-space indentation
+  and returned as arrays containing one formatted line per element.
 - `variables` is always a JSON object. It is `{}` when no variables are needed.
 - Streaming is not supported.
 
@@ -202,7 +202,14 @@ Status: `200 OK`
 ```json
 {
   "intent": "GENERATE",
-  "query": "query GetCountry($code: ID!) {\n  country(code: $code) {\n    code\n    name\n  }\n}",
+  "query": [
+    "query GetCountry($code: ID!) {",
+    "  country(code: $code) {",
+    "    code",
+    "    name",
+    "  }",
+    "}"
+  ],
   "variables": {
     "code": "CA"
   }
@@ -212,7 +219,8 @@ Status: `200 OK`
 Required fields:
 
 - `intent`: always `GENERATE`
-- `query`: complete, named, pretty-printed GraphQL query or mutation
+- `query`: array containing one line of the complete, named, pretty-printed
+  GraphQL query or mutation per element
 - `variables`: JSON object compatible with the operation
 
 #### Troubleshoot response
@@ -229,7 +237,14 @@ Status: `200 OK`
       "suggestion": "Replace 'title' with 'name'."
     }
   ],
-  "correctedQuery": "query ListCountries {\n  countries {\n    code\n    name\n  }\n}",
+  "correctedQuery": [
+    "query ListCountries {",
+    "  countries {",
+    "    code",
+    "    name",
+    "  }",
+    "}"
+  ],
   "variables": {}
 }
 ```
@@ -241,8 +256,9 @@ Required fields:
 - `issues[].issue`: concise issue summary
 - `issues[].details`: explanation grounded in the configured schema
 - `issues[].suggestion`: specific remediation
-- `correctedQuery`: the submitted operation with the identified fixes applied,
-  complete, named, and pretty-printed
+- `correctedQuery`: array containing one line per element of the submitted
+  operation with the identified fixes applied, complete, named, and
+  pretty-printed
 - `variables`: corrected or inferred JSON variables object
 
 The AI is responsible for identifying troubleshooting issues. The Java service

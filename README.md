@@ -150,7 +150,14 @@ Example response:
 ```json
 {
   "intent": "GENERATE",
-  "query": "query ListCountries {\n  countries {\n    code\n    name\n  }\n}",
+  "query": [
+    "query ListCountries {",
+    "  countries {",
+    "    code",
+    "    name",
+    "  }",
+    "}"
+  ],
   "variables": {}
 }
 ```
@@ -175,7 +182,13 @@ Example response:
       "suggestion": "Replace 'title' with 'name'."
     }
   ],
-  "correctedQuery": "query ListCountries {\n  countries {\n    name\n  }\n}",
+  "correctedQuery": [
+    "query ListCountries {",
+    "  countries {",
+    "    name",
+    "  }",
+    "}"
+  ],
   "variables": {}
 }
 ```
