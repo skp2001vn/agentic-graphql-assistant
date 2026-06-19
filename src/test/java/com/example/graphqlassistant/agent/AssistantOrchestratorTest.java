@@ -230,6 +230,35 @@ class AssistantOrchestratorTest {
   }
 
   @Test
+  void requiresTroubleshootingPlaceholdersForMissingRuntimeValues() {
+    AtomicReference<ChatRequest> request = new AtomicReference<>();
+    ChatModel model =
+        chatModel(
+            chatRequest -> {
+              request.set(chatRequest);
+              return response(
+                  """
+                  {
+                    "intent":"TROUBLESHOOT",
+                    "issues":[{
+                      "issue":"Unknown field.",
+                      "details":"The field is not defined.",
+                      "suggestion":"Use a defined field."
+                    }],
+                    "operation":"query Greeting { greeting }",
+                    "variables":{}
+                  }
+                  """);
+            });
+
+    LangChain4jAgentFactory.createTroubleshootingAgent(model, tools)
+        .troubleshoot("Troubleshoot a query");
+
+    assertThat(request.get().messages().toString())
+        .contains("\"variables\":{\"code\":\"<runtime value>\"}");
+  }
+
+  @Test
   void usesTheAgenticConditionalWorkflowToSelectExactlyOneSpecialist() {
     AtomicInteger modelCalls = new AtomicInteger();
     AtomicReference<ChatRequest> request = new AtomicReference<>();
@@ -255,7 +284,7 @@ class AssistantOrchestratorTest {
   }
 
   @Test
-  void stopsAgenticToolLoopsAfterFourRounds() {
+  void stopsAgenticToolLoopsWhenNoFinalResponseArrives() {
     AtomicInteger modelCalls = new AtomicInteger();
     ChatModel model =
         chatModel(
@@ -274,8 +303,8 @@ class AssistantOrchestratorTest {
     assertThatThrownBy(() -> generationAgent.generate("Keep inspecting forever"))
         .isInstanceOf(RuntimeException.class)
         .rootCause()
-        .hasMessageContaining("exceeded 4 tool calling round trips");
-    assertThat(modelCalls).hasValue(5);
+        .hasMessageContaining("exceeded 5 tool calling round trips");
+    assertThat(modelCalls).hasValue(6);
   }
 
   @Test

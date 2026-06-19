@@ -108,6 +108,7 @@ public final class AssistantOrchestrator {
       } catch (RuntimeException exception) {
         throw new AgentExecutionException("Assistant agent execution failed", exception);
       }
+      tools.finishModelToolCalls();
       if (decision.intent() == RoutingIntent.GENERATE && !tools.wasSchemaInspected()) {
         throw new InvalidAgentResponseException(
             "Generation specialist did not inspect the configured schema");

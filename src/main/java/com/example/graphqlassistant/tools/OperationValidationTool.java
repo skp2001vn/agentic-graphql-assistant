@@ -16,8 +16,13 @@ import graphql.validation.Validator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 final class OperationValidationTool {
+
+  private static final Pattern MISSING_ARGUMENT_NAME =
+      Pattern.compile("\\b([_A-Za-z][_0-9A-Za-z]*)\\s*\\(\\s*([_A-Za-z][_0-9A-Za-z]*)\\s*\\)");
 
   private final GraphQLSchema schema;
 
@@ -31,15 +36,19 @@ final class OperationValidationTool {
       document = Parser.parse(input.operation());
     } catch (InvalidSyntaxException exception) {
       SourceLocation location = exception.getLocation();
+      OperationDiagnostic argumentSyntax =
+          missingArgumentNameDiagnostic(input.operation(), location);
       return new OperationValidationResult(
           false,
           List.of(
-              new OperationDiagnostic(
-                  "InvalidSyntax",
-                  exception.getMessage(),
-                  location.getLine(),
-                  location.getColumn(),
-                  List.of())));
+              argumentSyntax != null
+                  ? argumentSyntax
+                  : new OperationDiagnostic(
+                      "InvalidSyntax",
+                      exception.getMessage(),
+                      location.getLine(),
+                      location.getColumn(),
+                      List.of())));
     }
 
     List<OperationDiagnostic> diagnostics = new ArrayList<>();
@@ -50,6 +59,35 @@ final class OperationValidationTool {
                 .map(this::toDiagnostic)
                 .toList());
     return new OperationValidationResult(diagnostics.isEmpty(), diagnostics);
+  }
+
+  private OperationDiagnostic missingArgumentNameDiagnostic(
+      String operation, SourceLocation location) {
+    Matcher matcher = MISSING_ARGUMENT_NAME.matcher(operation);
+    if (!matcher.find()) {
+      return null;
+    }
+
+    String fieldName = matcher.group(1);
+    String argumentName = matcher.group(2);
+    if (!Pattern.compile("\\$" + Pattern.quote(argumentName) + "\\s*:").matcher(operation).find()) {
+      return null;
+    }
+    SourceLocation safeLocation = location == null ? new SourceLocation(0, 0) : location;
+    return new OperationDiagnostic(
+        "InvalidArgumentSyntax",
+        "Field '"
+            + fieldName
+            + "' must pass arguments as name: value; use "
+            + fieldName
+            + "("
+            + argumentName
+            + ": $"
+            + argumentName
+            + ") for the declared variable",
+        safeLocation.getLine(),
+        safeLocation.getColumn(),
+        List.of(fieldName));
   }
 
   private List<OperationDiagnostic> operationContractDiagnostics(Document document) {

@@ -18,18 +18,23 @@ public interface TroubleshootingToolAgent {
       call validateOperation on the supplied operation. Create a complete correction and call
       validateOperation on that correction before the final answer. Tool calls are intermediate
       actions, not final answers. Diagnose every issue, preserve the operation's purpose, and apply
-      every reported fix. The correction must contain exactly one named operation whose name starts
-      with an uppercase letter. Every field argument value MUST use a declared variable with no
-      default value, and the variables JSON object MUST contain the runtime value. Never execute
-      GraphQL or access any external resource. Apply every diagnostic from validateOperation and
-      do not return a final answer unless the corrected operation reports valid=true. You have at
-      most four tool calls. Do not call formatOperation because Java formats the final operation.
-      For a code argument, use the exact pattern query Name($code: ID!) {
+      every reported fix. Preserve every valid field selection and its nesting exactly; never remove
+      or restructure unrelated valid fields. If syntax validation prevents schema diagnostics, fix
+      only the syntax first and validate again before applying schema fixes. The correction must
+      contain exactly one named operation whose name starts with an uppercase letter. Every field
+      argument value MUST use a declared variable with no default value, and the variables JSON
+      object MUST contain the runtime value. When the prompt does not provide a runtime value, use
+      a type-compatible placeholder; for an ID or String variable use "<runtime value>". Never
+      execute GraphQL or access any external resource. Apply every diagnostic from
+      validateOperation and do not return a final answer unless the corrected operation reports
+      valid=true. You have at most four tool calls. Do not call formatOperation because Java formats
+      the final operation. For a code argument, use the exact pattern query Name($code: ID!) {
       country(code: $code) { ... } }, never a literal and never an undeclared variable.
 
       After the tool work is complete, return only one JSON object with exactly these fields:
       {"intent":"TROUBLESHOOT","issues":[{"issue":"...","details":"...",
-      "suggestion":"..."}],"operation":"...","variables":{}}.
+      "suggestion":"..."}],"operation":"...","variables":{"code":"<runtime value>"}}.
+      Replace code with each declared variable name and use its supplied or placeholder value.
       The issues array must be nonempty.
       """)
   @UserMessage("{{prompt}}")

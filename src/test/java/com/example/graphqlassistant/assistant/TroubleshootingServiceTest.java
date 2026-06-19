@@ -31,6 +31,7 @@ class TroubleshootingServiceTest {
       """
       type Query {
         countries: [Country!]!
+        country(code: ID!): Country
       }
 
       type Country {
@@ -126,6 +127,61 @@ class TroubleshootingServiceTest {
     assertThat(toolResultText(requests.get(4)))
         .contains("query ListCountries")
         .doesNotContain("INVALID_");
+  }
+
+  @Test
+  void acceptsFinalResponseAfterFourTroubleshootingToolCalls() {
+    AssistantService service =
+        service(
+            sequentialResponses(
+                troubleshootingRoute(),
+                toolCall("inspect-country", "inspectSchema", "{\"typeNames\":[\"Country\"]}"),
+                toolCall(
+                    "validate-original",
+                    "validateOperation",
+                    """
+                    {"operation":"query CountryQuery($code: ID!) { country(code) { code name1 } }"}
+                    """),
+                toolCall(
+                    "validate-first-correction",
+                    "validateOperation",
+                    """
+                    {"operation":"query CountryQuery($code: ID!) { country(code: $code) { code name1 } }"}
+                    """),
+                toolCall(
+                    "validate-final-correction",
+                    "validateOperation",
+                    """
+                    {"operation":"query CountryQuery($code: ID!) { country(code: $code) { code name } }"}
+                    """),
+                response(
+                    """
+                    {
+                      "intent":"TROUBLESHOOT",
+                      "issues":[
+                        {
+                          "issue":"Missing variable reference in field argument.",
+                          "details":"The country field does not pass the declared code variable.",
+                          "suggestion":"Use country(code: $code)."
+                        },
+                        {
+                          "issue":"Unknown field name1 on Country.",
+                          "details":"The schema defines name instead.",
+                          "suggestion":"Replace name1 with name."
+                        }
+                      ],
+                      "operation":"query CountryQuery($code: ID!) { country(code: $code) { code name } }",
+                      "variables":{"code":"<runtime value>"}
+                    }
+                    """)));
+
+    TroubleshootResponse response =
+        (TroubleshootResponse)
+            service.assist("Debug query CountryQuery($code: ID!) { country(code) { code name1 } }");
+
+    assertThat(response.issues()).hasSize(2);
+    assertThat(response.correctedQuery()).contains("country(code: $code)", "code", "name");
+    assertThat(response.variables()).containsEntry("code", "<runtime value>");
   }
 
   @Test

@@ -9,6 +9,8 @@ import java.util.Objects;
 
 public final class GraphqlAssistantTools {
 
+  public static final int MAX_TOOL_CALLS = 4;
+
   private final SchemaInspectionTool schemaInspection;
 
   private final OperationValidationTool operationValidation;
@@ -18,6 +20,8 @@ public final class GraphqlAssistantTools {
   private final AssistantRequestLogger requestLogger;
 
   private final ThreadLocal<Boolean> schemaInspected = ThreadLocal.withInitial(() -> false);
+
+  private final ThreadLocal<Integer> toolCalls = new ThreadLocal<>();
 
   private GraphqlAssistantTools(
       SchemaInspectionTool schemaInspection,
@@ -47,6 +51,7 @@ public final class GraphqlAssistantTools {
   @Tool("Inspect configured GraphQL root operations and requested type definitions")
   public SchemaInspectionResult inspectSchema(
       @P("Type names to inspect; roots are always included") List<String> typeNames) {
+    recordToolCall();
     InspectSchemaInput input = new InspectSchemaInput(typeNames);
     SchemaInspectionResult result =
         requestLogger.toolCall("inspectSchema", input, () -> schemaInspection.inspect(input));
@@ -57,6 +62,7 @@ public final class GraphqlAssistantTools {
   @Tool("Parse and validate a GraphQL operation against the configured schema")
   public OperationValidationResult validateOperation(
       @P("GraphQL operation to validate") String operation) {
+    recordToolCall();
     ValidateOperationInput input = new ValidateOperationInput(operation);
     return requestLogger.toolCall(
         "validateOperation", input, () -> operationValidation.validate(input));
@@ -65,6 +71,7 @@ public final class GraphqlAssistantTools {
   @Tool("Parse and return a canonically formatted GraphQL operation")
   public OperationFormattingResult formatOperation(
       @P("GraphQL operation to format") String operation) {
+    recordToolCall();
     FormatOperationInput input = new FormatOperationInput(operation);
     return requestLogger.toolCall(
         "formatOperation", input, () -> operationFormatting.format(input));
@@ -72,13 +79,30 @@ public final class GraphqlAssistantTools {
 
   public void beginToolTracking() {
     schemaInspected.set(false);
+    toolCalls.set(0);
   }
 
   public boolean wasSchemaInspected() {
     return schemaInspected.get();
   }
 
+  public void finishModelToolCalls() {
+    toolCalls.remove();
+  }
+
   public void clearToolTracking() {
     schemaInspected.remove();
+    toolCalls.remove();
+  }
+
+  private void recordToolCall() {
+    Integer calls = toolCalls.get();
+    if (calls == null) {
+      return;
+    }
+    if (calls >= MAX_TOOL_CALLS) {
+      throw new IllegalStateException("Assistant exceeded its tool call limit");
+    }
+    toolCalls.set(calls + 1);
   }
 }

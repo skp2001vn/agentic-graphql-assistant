@@ -98,6 +98,21 @@ class GraphqlAssistantToolsTest {
   }
 
   @Test
+  void reportsMissingArgumentNameSyntaxActionably() {
+    OperationValidationResult result =
+        tools.validateOperation("query Country($code: ID!) { country(code) { code name } }");
+
+    assertThat(result.valid()).isFalse();
+    assertThat(result.diagnostics())
+        .singleElement()
+        .satisfies(
+            diagnostic -> {
+              assertThat(diagnostic.code()).isEqualTo("InvalidArgumentSyntax");
+              assertThat(diagnostic.message()).contains("country(code: $code)");
+            });
+  }
+
+  @Test
   void formatsOperationsCanonically() {
     OperationFormattingResult result =
         tools.formatOperation("query Country($code:ID!){country(code:$code){code name}}");
@@ -126,5 +141,18 @@ class GraphqlAssistantToolsTest {
     assertThatThrownBy(() -> new FormatOperationInput(null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("operation");
+  }
+
+  @Test
+  void rejectsAFifthTrackedModelToolCall() {
+    tools.beginToolTracking();
+
+    for (int call = 0; call < GraphqlAssistantTools.MAX_TOOL_CALLS; call++) {
+      assertThat(tools.inspectSchema(List.of()).types()).isNotEmpty();
+    }
+
+    assertThatThrownBy(() -> tools.inspectSchema(List.of()))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("Assistant exceeded its tool call limit");
   }
 }
