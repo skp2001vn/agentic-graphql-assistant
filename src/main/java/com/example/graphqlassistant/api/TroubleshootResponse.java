@@ -1,13 +1,15 @@
 package com.example.graphqlassistant.api;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+@Schema(requiredProperties = {"intent", "issues", "correctedQuery", "variables"})
 public record TroubleshootResponse(
-    String intent,
+    @Schema(allowableValues = "TROUBLESHOOT") String intent,
     List<TroubleshootingIssue> issues,
     String correctedQuery,
     Map<String, Object> variables)

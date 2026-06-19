@@ -1,11 +1,16 @@
 package com.example.graphqlassistant.api;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
-public record GenerateResponse(String intent, String query, Map<String, Object> variables)
+@Schema(requiredProperties = {"intent", "query", "variables"})
+public record GenerateResponse(
+    @Schema(allowableValues = "GENERATE") String intent,
+    String query,
+    Map<String, Object> variables)
     implements AssistantResponse {
 
   public GenerateResponse(String query, Map<String, Object> variables) {
