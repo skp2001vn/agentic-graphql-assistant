@@ -10,12 +10,18 @@ public class AssistantProperties {
 
   private final Ai ai = new Ai();
 
+  private final Logging logging = new Logging();
+
   public Schema getSchema() {
     return schema;
   }
 
   public Ai getAi() {
     return ai;
+  }
+
+  public Logging getLogging() {
+    return logging;
   }
 
   public static class Schema {
@@ -119,6 +125,19 @@ public class AssistantProperties {
 
     public void setModel(String model) {
       this.model = model;
+    }
+  }
+
+  public static class Logging {
+
+    private boolean fullContentEnabled = true;
+
+    public boolean isFullContentEnabled() {
+      return fullContentEnabled;
+    }
+
+    public void setFullContentEnabled(boolean fullContentEnabled) {
+      this.fullContentEnabled = fullContentEnabled;
     }
   }
 }

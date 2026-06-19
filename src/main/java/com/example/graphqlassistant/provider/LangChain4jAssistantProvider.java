@@ -1,5 +1,6 @@
 package com.example.graphqlassistant.provider;
 
+import com.example.graphqlassistant.logging.AssistantRequestLogger;
 import dev.langchain4j.model.ModelProvider;
 import dev.langchain4j.model.chat.Capability;
 import dev.langchain4j.model.chat.ChatModel;
@@ -19,10 +20,21 @@ public final class LangChain4jAssistantProvider implements AssistantAiProvider {
 
   private final ChatModel delegate;
 
+  private final AssistantRequestLogger requestLogger;
+
   public LangChain4jAssistantProvider(String providerName, String modelName, ChatModel delegate) {
+    this(providerName, modelName, delegate, AssistantRequestLogger.disabled());
+  }
+
+  public LangChain4jAssistantProvider(
+      String providerName,
+      String modelName,
+      ChatModel delegate,
+      AssistantRequestLogger requestLogger) {
     this.providerName = Objects.requireNonNull(providerName);
     this.modelName = Objects.requireNonNull(modelName);
     this.delegate = Objects.requireNonNull(delegate);
+    this.requestLogger = Objects.requireNonNull(requestLogger);
   }
 
   @Override
@@ -42,7 +54,9 @@ public final class LangChain4jAssistantProvider implements AssistantAiProvider {
     }
 
     try {
-      return delegate.doChat(request);
+      ChatResponse response = delegate.doChat(request);
+      requestLogger.aiResponse(providerName, modelName, response);
+      return response;
     } catch (RuntimeException exception) {
       throw new AiProviderException(providerName, modelName);
     }

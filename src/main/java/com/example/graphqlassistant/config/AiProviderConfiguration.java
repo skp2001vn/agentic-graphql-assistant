@@ -1,7 +1,9 @@
 package com.example.graphqlassistant.config;
 
+import com.example.graphqlassistant.logging.AssistantRequestLogger;
 import com.example.graphqlassistant.provider.AssistantAiProvider;
 import com.example.graphqlassistant.provider.LangChain4jAssistantProvider;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
@@ -16,7 +18,17 @@ import org.springframework.context.annotation.Configuration;
 public class AiProviderConfiguration {
 
   @Bean
-  AssistantAiProvider assistantAiProvider(AssistantProperties properties) {
+  AssistantRequestLogger assistantRequestLogger(AssistantProperties properties) {
+    String configuredApiKey = properties.getAi().getOpenai().getApiKey();
+    return new AssistantRequestLogger(
+        properties.getLogging().isFullContentEnabled(),
+        new ObjectMapper(),
+        configuredApiKey == null ? null : configuredApiKey.trim());
+  }
+
+  @Bean
+  AssistantAiProvider assistantAiProvider(
+      AssistantProperties properties, AssistantRequestLogger requestLogger) {
     AssistantProperties.Ai ai = properties.getAi();
     Duration timeout = requirePositive(ai.getRequestTimeout(), "assistant.ai.request-timeout");
     requirePositive(ai.getWarmResponseTarget(), "assistant.ai.warm-response-target");
@@ -24,14 +36,16 @@ public class AiProviderConfiguration {
         requireNonBlank(ai.getProvider(), "assistant.ai.provider").toLowerCase(Locale.ROOT);
 
     return switch (provider) {
-      case "ollama" -> createOllamaProvider(ai.getOllama(), timeout);
-      case "openai" -> createOpenAiProvider(ai.getOpenai(), timeout);
+      case "ollama" -> createOllamaProvider(ai.getOllama(), timeout, requestLogger);
+      case "openai" -> createOpenAiProvider(ai.getOpenai(), timeout, requestLogger);
       default -> throw new IllegalStateException("assistant.ai.provider must be ollama or openai");
     };
   }
 
   private AssistantAiProvider createOllamaProvider(
-      AssistantProperties.Ollama properties, Duration timeout) {
+      AssistantProperties.Ollama properties,
+      Duration timeout,
+      AssistantRequestLogger requestLogger) {
     String baseUrl = requireNonBlank(properties.getBaseUrl(), "assistant.ai.ollama.base-url");
     String model = requireNonBlank(properties.getModel(), "assistant.ai.ollama.model");
     ChatModel chatModel =
@@ -43,11 +57,13 @@ public class AiProviderConfiguration {
             .logRequests(false)
             .logResponses(false)
             .build();
-    return new LangChain4jAssistantProvider("ollama", model, chatModel);
+    return new LangChain4jAssistantProvider("ollama", model, chatModel, requestLogger);
   }
 
   private AssistantAiProvider createOpenAiProvider(
-      AssistantProperties.OpenAi properties, Duration timeout) {
+      AssistantProperties.OpenAi properties,
+      Duration timeout,
+      AssistantRequestLogger requestLogger) {
     String apiKey = requireNonBlank(properties.getApiKey(), "assistant.ai.openai.api-key");
     String model = requireNonBlank(properties.getModel(), "assistant.ai.openai.model");
     ChatModel chatModel =
@@ -59,7 +75,7 @@ public class AiProviderConfiguration {
             .logRequests(false)
             .logResponses(false)
             .build();
-    return new LangChain4jAssistantProvider("openai", model, chatModel);
+    return new LangChain4jAssistantProvider("openai", model, chatModel, requestLogger);
   }
 
   private static String requireNonBlank(String value, String propertyName) {

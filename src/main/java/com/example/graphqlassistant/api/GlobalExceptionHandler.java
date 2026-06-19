@@ -21,6 +21,9 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+  static final String ERROR_CATEGORY_ATTRIBUTE =
+      GlobalExceptionHandler.class.getName() + ".errorCategory";
+
   @ExceptionHandler(ClarificationRequiredException.class)
   ResponseEntity<ApiError> handleClarificationRequired(
       ClarificationRequiredException exception, HttpServletRequest request) {
@@ -127,6 +130,7 @@ public class GlobalExceptionHandler {
       String message,
       List<String> details,
       HttpServletRequest request) {
+    request.setAttribute(ERROR_CATEGORY_ATTRIBUTE, code);
     ApiError error =
         new ApiError(Instant.now(), requestId(request), status.value(), code, message, details);
     return ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(error);

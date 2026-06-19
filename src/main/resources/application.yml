@@ -2,9 +2,18 @@ server:
   address: 127.0.0.1
   port: 8080
 
+logging:
+  structured:
+    format:
+      console: logstash
+
 assistant:
   schema:
     location: classpath:schema.graphql
+  logging:
+    # WARNING: Logs complete schemas, prompts, operations, variables, AI responses,
+    # and tool inputs/outputs. Disable before handling content that must remain private.
+    full-content-enabled: true
   ai:
     provider: ollama
     request-timeout: 60s

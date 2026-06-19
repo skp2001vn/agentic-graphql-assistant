@@ -7,6 +7,7 @@ import com.example.graphqlassistant.agent.LangChain4jAgentFactory;
 import com.example.graphqlassistant.agent.SpecialistWorkflow;
 import com.example.graphqlassistant.agent.TroubleshootingAgent;
 import com.example.graphqlassistant.assistant.AssistantService;
+import com.example.graphqlassistant.logging.AssistantRequestLogger;
 import com.example.graphqlassistant.provider.AssistantAiProvider;
 import com.example.graphqlassistant.schema.GraphqlOperationProcessor;
 import com.example.graphqlassistant.schema.GraphqlSchemaContext;
@@ -20,8 +21,9 @@ public class AgentConfiguration {
   private static final double MINIMUM_ROUTING_CONFIDENCE = 0.7;
 
   @Bean
-  GraphqlAssistantTools graphqlAssistantTools(GraphqlSchemaContext schemaContext) {
-    return GraphqlAssistantTools.from(schemaContext);
+  GraphqlAssistantTools graphqlAssistantTools(
+      GraphqlSchemaContext schemaContext, AssistantRequestLogger requestLogger) {
+    return GraphqlAssistantTools.from(schemaContext, requestLogger);
   }
 
   @Bean
@@ -52,13 +54,15 @@ public class AgentConfiguration {
       AssistantRouter router,
       SpecialistWorkflow specialistWorkflow,
       GraphqlAssistantTools graphqlAssistantTools,
-      AssistantProperties properties) {
+      AssistantProperties properties,
+      AssistantRequestLogger requestLogger) {
     return new AssistantOrchestrator(
         router,
         specialistWorkflow,
         graphqlAssistantTools,
         properties.getAi().getRequestTimeout(),
-        MINIMUM_ROUTING_CONFIDENCE);
+        MINIMUM_ROUTING_CONFIDENCE,
+        requestLogger);
   }
 
   @Bean
@@ -68,7 +72,12 @@ public class AgentConfiguration {
 
   @Bean
   AssistantService assistantService(
-      AssistantOrchestrator orchestrator, GraphqlOperationProcessor operationProcessor) {
-    return new AssistantService(orchestrator, operationProcessor);
+      AssistantOrchestrator orchestrator,
+      GraphqlOperationProcessor operationProcessor,
+      AssistantRequestLogger requestLogger,
+      AssistantAiProvider provider,
+      GraphqlSchemaContext schemaContext) {
+    return new AssistantService(
+        orchestrator, operationProcessor, requestLogger, provider, schemaContext);
   }
 }
