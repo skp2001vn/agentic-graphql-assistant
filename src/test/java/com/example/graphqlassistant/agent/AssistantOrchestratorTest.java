@@ -259,6 +259,25 @@ class AssistantOrchestratorTest {
   }
 
   @Test
+  void requiresGenerationPlaceholdersForMissingRuntimeValues() {
+    AtomicReference<ChatRequest> request = new AtomicReference<>();
+    ChatModel model =
+        chatModel(
+            chatRequest -> {
+              request.set(chatRequest);
+              return response(
+                  generationResult(
+                      "query GetCountry($code: ID!) { country(code: $code) { code name } }"));
+            });
+
+    LangChain4jAgentFactory.createGenerationAgent(model, tools)
+        .generate("Generate a query to get a country based on code");
+
+    assertThat(request.get().messages().toString())
+        .contains("\"variables\":{\"code\":\"<runtime value>\"}");
+  }
+
+  @Test
   void usesTheAgenticConditionalWorkflowToSelectExactlyOneSpecialist() {
     AtomicInteger modelCalls = new AtomicInteger();
     AtomicReference<ChatRequest> request = new AtomicReference<>();
