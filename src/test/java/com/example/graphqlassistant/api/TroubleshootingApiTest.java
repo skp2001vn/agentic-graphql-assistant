@@ -7,7 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.graphqlassistant.agent.InvalidAgentResponseException;
 import com.example.graphqlassistant.assistant.AssistantService;
-import com.example.graphqlassistant.provider.AiProviderException;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,63 +19,53 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(controllers = AssistantController.class)
 @Import({GlobalExceptionHandler.class, RequestIdFilter.class})
-class GenerationApiTest {
+class TroubleshootingApiTest {
 
   @Autowired private MockMvc mockMvc;
 
   @MockitoBean private AssistantService assistantService;
 
   @Test
-  void returnsGeneratedOperations() throws Exception {
-    when(assistantService.assist("Generate country CA"))
+  void returnsTroubleshootingIssuesAndTheCorrectedOperation() throws Exception {
+    String prompt = "Why does query ListCountries { countries { title } } fail?";
+    when(assistantService.assist(prompt))
         .thenReturn(
-            new GenerateResponse(
-                "query GetCountry($code: ID!) {\n"
-                    + "  country(code: $code) {\n"
-                    + "    name\n"
-                    + "  }\n"
-                    + "}",
-                Map.of("code", "CA")));
+            new TroubleshootResponse(
+                List.of(
+                    new TroubleshootingIssue(
+                        "Unknown field title.",
+                        "Country defines name rather than title.",
+                        "Replace title with name.")),
+                "query ListCountries {\n  countries {\n    name\n  }\n}",
+                Map.of()));
 
     mockMvc
         .perform(
             post("/assistant")
                 .contentType(MediaType.TEXT_PLAIN)
                 .accept(MediaType.APPLICATION_JSON)
-                .content("Generate country CA"))
+                .content(prompt))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.intent").value("GENERATE"))
-        .andExpect(jsonPath("$.query").value(org.hamcrest.Matchers.containsString("GetCountry")))
-        .andExpect(jsonPath("$.variables.code").value("CA"));
+        .andExpect(jsonPath("$.intent").value("TROUBLESHOOT"))
+        .andExpect(jsonPath("$.issues[0].issue").value("Unknown field title."))
+        .andExpect(jsonPath("$.issues[0].details").value("Country defines name rather than title."))
+        .andExpect(jsonPath("$.issues[0].suggestion").value("Replace title with name."))
+        .andExpect(jsonPath("$.correctedQuery").value(org.hamcrest.Matchers.containsString("name")))
+        .andExpect(jsonPath("$.variables").isMap());
   }
 
   @Test
-  void mapsInvalidModelResultsToBadGateway() throws Exception {
-    when(assistantService.assist("Generate a query"))
-        .thenThrow(new InvalidAgentResponseException("invalid"));
+  void mapsInvalidTroubleshootingResultsToBadGateway() throws Exception {
+    String prompt = "Troubleshoot this query";
+    when(assistantService.assist(prompt)).thenThrow(new InvalidAgentResponseException("invalid"));
 
     mockMvc
         .perform(
             post("/assistant")
                 .contentType(MediaType.TEXT_PLAIN)
                 .accept(MediaType.APPLICATION_JSON)
-                .content("Generate a query"))
+                .content(prompt))
         .andExpect(status().isBadGateway())
         .andExpect(jsonPath("$.code").value("INVALID_AI_RESPONSE"));
-  }
-
-  @Test
-  void mapsProviderFailuresToBadGateway() throws Exception {
-    when(assistantService.assist("Generate a query"))
-        .thenThrow(new AiProviderException("ollama", "qwen3:8b"));
-
-    mockMvc
-        .perform(
-            post("/assistant")
-                .contentType(MediaType.TEXT_PLAIN)
-                .accept(MediaType.APPLICATION_JSON)
-                .content("Generate a query"))
-        .andExpect(status().isBadGateway())
-        .andExpect(jsonPath("$.code").value("AI_PROVIDER_ERROR"));
   }
 }

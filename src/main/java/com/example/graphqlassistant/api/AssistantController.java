@@ -28,7 +28,7 @@ public class AssistantController {
       consumes = MediaType.TEXT_PLAIN_VALUE,
       produces = MediaType.APPLICATION_JSON_VALUE)
   public AssistantResponse assist(HttpServletRequest request) {
-    return assistantService.generate(readPrompt(request));
+    return assistantService.assist(readPrompt(request));
   }
 
   private String readPrompt(HttpServletRequest request) {

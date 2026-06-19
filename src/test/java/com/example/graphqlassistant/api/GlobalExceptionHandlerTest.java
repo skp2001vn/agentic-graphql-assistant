@@ -33,7 +33,7 @@ class GlobalExceptionHandlerTest {
 
   @Test
   void hidesUnexpectedExceptionDetails() throws Exception {
-    when(assistantService.generate(anyString()))
+    when(assistantService.assist(anyString()))
         .thenThrow(new IllegalStateException("sensitive internal detail"));
 
     mockMvc
