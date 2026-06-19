@@ -61,14 +61,14 @@ class LangChain4jAssistantProviderTest {
           }
         };
     AssistantAiProvider provider =
-        new LangChain4jAssistantProvider("openai", "gpt-5-mini", delegate);
+        new LangChain4jAssistantProvider("openai", "gpt-5.4-mini", delegate);
 
     assertThatThrownBy(() -> provider.chat(request()))
         .isInstanceOfSatisfying(
             AiProviderException.class,
             exception -> {
               assertThat(exception)
-                  .hasMessage("AI provider request failed for openai model gpt-5-mini")
+                  .hasMessage("AI provider request failed for openai model gpt-5.4-mini")
                   .hasNoCause();
               assertThat(stackTrace(exception)).doesNotContain(apiKey);
             });

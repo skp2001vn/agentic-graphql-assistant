@@ -46,8 +46,8 @@ class AiProviderConfigurationTest {
               assertThat(context).hasNotFailed();
               AssistantAiProvider provider = context.getBean(AssistantAiProvider.class);
               assertThat(provider.providerName()).isEqualTo("openai");
-              assertThat(provider.modelName()).isEqualTo("gpt-5-mini");
-              assertThat(provider.defaultRequestParameters().modelName()).isEqualTo("gpt-5-mini");
+              assertThat(provider.modelName()).isEqualTo("gpt-5.4-mini");
+              assertThat(provider.defaultRequestParameters().modelName()).isEqualTo("gpt-5.4-mini");
             });
   }
 

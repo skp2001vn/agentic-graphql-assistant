@@ -115,7 +115,7 @@ Important settings:
 | `ASSISTANT_AI_OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama API base URL |
 | `ASSISTANT_AI_OLLAMA_MODEL` | `qwen3:8b` | Ollama model |
 | `OPENAI_API_KEY` | empty | Required when the provider is `openai` |
-| `ASSISTANT_AI_OPENAI_MODEL` | `gpt-5-mini` | OpenAI model |
+| `ASSISTANT_AI_OPENAI_MODEL` | `gpt-5.4-mini` | OpenAI model |
 | `ASSISTANT_SCHEMA_LOCATION` | `classpath:schema.graphql` | SDL resource location |
 | `ASSISTANT_LOGGING_FULL_CONTENT_ENABLED` | `true` | Log complete request, model, schema, and tool content |
 
@@ -126,6 +126,7 @@ Set the provider and a real key in your shell or untracked `.env`:
 ```bash
 export ASSISTANT_AI_PROVIDER=openai
 export OPENAI_API_KEY=replace-with-your-openai-api-key
+export ASSISTANT_AI_OPENAI_MODEL=gpt-5.4-mini
 ./mvnw spring-boot:run
 ```
 

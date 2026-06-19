@@ -109,7 +109,7 @@ public class AssistantProperties {
 
     private String apiKey = "";
 
-    private String model = "gpt-5-mini";
+    private String model = "gpt-5.4-mini";
 
     public String getApiKey() {
       return apiKey;
