@@ -191,7 +191,7 @@ class TroubleshootingServiceTest {
     assertThat(response.issues()).hasSize(2);
     assertThat(response.correctedQuery())
         .contains("  country(code: $code) {", "    code", "    name");
-    assertThat(response.variables()).containsEntry("code", "<runtime value>");
+    assertThat(response.variables()).containsEntry("code", "CA");
   }
 
   @Test
@@ -250,7 +250,7 @@ class TroubleshootingServiceTest {
 
     assertThat(response.issues()).hasSize(2);
     assertThat(response.correctedQuery()).contains("    name", "    native");
-    assertThat(response.variables()).containsExactlyEntriesOf(Map.of("code", "<runtime value>"));
+    assertThat(response.variables()).containsExactlyEntriesOf(Map.of("code", "CA"));
   }
 
   @Test
@@ -300,7 +300,7 @@ class TroubleshootingServiceTest {
 
     assertThat(response.issues()).isEmpty();
     assertThat(response.correctedQuery()).containsExactly(operation.strip().split("\\R"));
-    assertThat(response.variables()).containsEntry("code", "<runtime value>");
+    assertThat(response.variables()).containsEntry("code", "CA");
   }
 
   @Test

@@ -193,6 +193,10 @@ Example response:
 }
 ```
 
+When a prompt does not provide a required variable value, the API returns a
+realistic type-compatible example such as `"CA"` for a country code rather than
+an implementation placeholder.
+
 Ambiguous prompts return `422 CLARIFICATION_REQUIRED`. Provider, invalid model
 response, and bounded agent failures return structured `502` errors. All
 handled errors include a request ID:

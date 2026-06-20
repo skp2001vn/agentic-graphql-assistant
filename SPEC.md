@@ -221,7 +221,8 @@ Required fields:
 - `intent`: always `GENERATE`
 - `query`: array containing one line of the complete, named, pretty-printed
   GraphQL query or mutation per element
-- `variables`: JSON object compatible with the operation
+- `variables`: JSON object compatible with the operation; when the prompt does
+  not supply a value, the service returns a realistic type-compatible example
 
 #### Troubleshoot response
 
@@ -260,7 +261,8 @@ Required fields:
 - `correctedQuery`: array containing one line per element of the submitted
   operation with the identified fixes applied, complete, named, and
   pretty-printed
-- `variables`: corrected or inferred JSON variables object
+- `variables`: corrected or inferred JSON variables object; unresolved values
+  are replaced with realistic type-compatible examples
 
 The AI is responsible for identifying troubleshooting issues. The Java service
 does not independently construct an issue list from deterministic GraphQL

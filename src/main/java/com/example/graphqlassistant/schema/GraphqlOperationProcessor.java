@@ -22,6 +22,8 @@ import graphql.schema.GraphQLScalarType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.UnExecutableSchemaGenerator;
 import graphql.validation.Validator;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -33,6 +35,8 @@ public final class GraphqlOperationProcessor {
 
   private static final String INVALID_OPERATION = "The AI returned an invalid GraphQL operation";
 
+  private static final String UNRESOLVED_VALUE = "<runtime value>";
+
   private final GraphQLSchema schema;
 
   public GraphqlOperationProcessor(GraphqlSchemaContext schemaContext) {
@@ -42,6 +46,10 @@ public final class GraphqlOperationProcessor {
   }
 
   public String process(String operation, Map<String, Object> variables) {
+    return processWithVariables(operation, variables).operation();
+  }
+
+  public ProcessedOperation processWithVariables(String operation, Map<String, Object> variables) {
     if (operation == null || operation.isBlank() || variables == null) {
       throw invalidOperation();
     }
@@ -50,13 +58,73 @@ public final class GraphqlOperationProcessor {
       OperationDefinition definition = requireOneNamedOperation(document);
       requireValidDocument(document);
       requireVariableArguments(document);
-      requireCompatibleVariables(definition, variables);
-      return AstPrinter.printAst(document).strip();
+      Map<String, Object> resolvedVariables = resolveExampleVariables(definition, variables);
+      requireCompatibleVariables(definition, resolvedVariables);
+      return new ProcessedOperation(AstPrinter.printAst(document).strip(), resolvedVariables);
     } catch (InvalidAgentResponseException exception) {
       throw exception;
     } catch (GraphQLException exception) {
       throw invalidOperation();
     }
+  }
+
+  private Map<String, Object> resolveExampleVariables(
+      OperationDefinition operation, Map<String, Object> variables) {
+    Map<String, Object> resolved = new LinkedHashMap<>(variables);
+    operation
+        .getVariableDefinitions()
+        .forEach(
+            definition -> {
+              String name = definition.getName();
+              if (UNRESOLVED_VALUE.equals(resolved.get(name))) {
+                GraphQLInputType type =
+                    (GraphQLInputType) TypeFromAST.getTypeFromAST(schema, definition.getType());
+                resolved.put(name, exampleValue(name, type));
+              }
+            });
+    return Collections.unmodifiableMap(resolved);
+  }
+
+  private Object exampleValue(String variableName, GraphQLInputType type) {
+    if (type instanceof GraphQLNonNull nonNull) {
+      return exampleValue(variableName, (GraphQLInputType) nonNull.getWrappedType());
+    }
+    if (type instanceof GraphQLList list) {
+      return List.of(exampleValue(variableName, (GraphQLInputType) list.getWrappedType()));
+    }
+    if (type instanceof GraphQLEnumType enumType) {
+      return enumType.getValues().getFirst().getName();
+    }
+    if (type instanceof GraphQLInputObjectType inputObject) {
+      Map<String, Object> fields = new LinkedHashMap<>();
+      inputObject.getFields().stream()
+          .filter(field -> field.getType() instanceof GraphQLNonNull)
+          .forEach(
+              field -> fields.put(field.getName(), exampleValue(field.getName(), field.getType())));
+      return fields;
+    }
+    if (type instanceof GraphQLScalarType scalar) {
+      return switch (scalar.getName()) {
+        case "Boolean" -> true;
+        case "Int" -> 1;
+        case "Float" -> 1.0;
+        case "ID" -> variableName.toLowerCase(Locale.ROOT).endsWith("code") ? "CA" : "example-id";
+        case "String" -> exampleString(variableName);
+        default -> "example";
+      };
+    }
+    throw invalidOperation();
+  }
+
+  private String exampleString(String variableName) {
+    String normalizedName = variableName.toLowerCase(Locale.ROOT);
+    if (normalizedName.endsWith("code")) {
+      return "CA";
+    }
+    if (normalizedName.endsWith("name")) {
+      return "Example";
+    }
+    return "example";
   }
 
   private OperationDefinition requireOneNamedOperation(Document document) {
@@ -165,5 +233,12 @@ public final class GraphqlOperationProcessor {
 
   private InvalidAgentResponseException invalidOperation() {
     return new InvalidAgentResponseException(INVALID_OPERATION);
+  }
+
+  public record ProcessedOperation(String operation, Map<String, Object> variables) {
+
+    public ProcessedOperation {
+      variables = Collections.unmodifiableMap(new LinkedHashMap<>(variables));
+    }
   }
 }
