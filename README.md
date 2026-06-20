@@ -139,7 +139,7 @@ Generate a GraphQL operation:
 ```bash
 curl -X POST http://localhost:8080/assistant \
   -H 'Content-Type: text/plain; charset=UTF-8' \
-  --data 'Generate a query that lists country codes and names.'
+  --data 'generate the query to get the list of country'
 ```
 
 Example response:
@@ -148,10 +148,22 @@ Example response:
 {
   "intent": "GENERATE",
   "query": [
-    "query ListCountries {",
+    "query GetCountries {",
     "  countries {",
     "    code",
     "    name",
+    "    native",
+    "    emoji",
+    "    capital",
+    "    currency",
+    "    continent {",
+    "      code",
+    "      name",
+    "    }",
+    "    languages {",
+    "      code",
+    "      name",
+    "    }",
     "  }",
     "}"
   ],
@@ -261,10 +273,45 @@ context from an earlier request.
 
 ### Generate an operation
 
+The successful examples below were captured with the default local model.
+Exact schema-valid field selections and diagnostic wording may vary by model
+run, while the JSON response contracts remain stable.
+
 ```bash
 curl -X POST http://localhost:8080/assistant \
   -H 'Content-Type: text/plain; charset=UTF-8' \
-  --data 'Generate a query for country CA with its code and name.'
+  --data 'generate the query to get the country by code'
+```
+
+Example response:
+
+```json
+{
+  "intent": "GENERATE",
+  "query": [
+    "query GetCountryByCode($code: ID!) {",
+    "  country(code: $code) {",
+    "    code",
+    "    name",
+    "    native",
+    "    emoji",
+    "    capital",
+    "    currency",
+    "    continent {",
+    "      code",
+    "      name",
+    "    }",
+    "    languages {",
+    "      code",
+    "      name",
+    "    }",
+    "  }",
+    "}"
+  ],
+  "variables": {
+    "code": "CA"
+  }
+}
 ```
 
 The response uses the `GENERATE` intent and returns:
@@ -281,7 +328,7 @@ sample: the service does not execute it.
 ```bash
 curl -X POST http://localhost:8080/assistant \
   -H 'Content-Type: text/plain; charset=UTF-8' \
-  --data 'Fix this query: query ListCountries { countries { title } }'
+  --data 'Troubleshoot query ListCountries { countries { title } }.'
 ```
 
 Example response:
@@ -291,9 +338,9 @@ Example response:
   "intent": "TROUBLESHOOT",
   "issues": [
     {
-      "issue": "Unknown field",
-      "details": "The schema defines 'name', not 'title'.",
-      "suggestion": "Replace 'title' with 'name'."
+      "issue": "Field 'title' is undefined in type 'Country'",
+      "details": "The field 'title' does not exist in the 'Country' type. The valid fields include 'code', 'name', 'native', 'emoji', 'capital', 'currency', 'continent', and 'languages'.",
+      "suggestion": "Use the 'name' field instead of 'title' to retrieve the country's name."
     }
   ],
   "correctedQuery": [
@@ -319,10 +366,19 @@ The response uses the `TROUBLESHOOT` intent and returns:
 Handled errors use a stable JSON envelope and include the request ID returned
 in the `X-Request-ID` response header:
 
+```bash
+curl -X POST http://localhost:8080/assistant \
+  -H 'Content-Type: text/plain; charset=UTF-8' \
+  -H 'X-Request-ID: docs-clarification' \
+  --data 'Help'
+```
+
+Example response:
+
 ```json
 {
-  "timestamp": "2026-06-18T15:00:00Z",
-  "requestId": "8cd91a0b-93c2-4e9a-9dce-f7eed67f52a5",
+  "timestamp": "2026-06-20T20:32:39.319041Z",
+  "requestId": "docs-clarification",
   "status": 422,
   "code": "CLARIFICATION_REQUIRED",
   "message": "Specify what operation you want to generate or include the operation to troubleshoot.",
@@ -337,7 +393,7 @@ in the `X-Request-ID` response header:
 | `415` | `UNSUPPORTED_MEDIA_TYPE` | Request is not UTF-8 `text/plain` |
 | `422` | `CLARIFICATION_REQUIRED` | Prompt is ambiguous or lacks enough context |
 | `500` | `INTERNAL_ERROR` | Unexpected application failure |
-| `502` | `AI_PROVIDER_ERROR` | Provider request or bounded workflow timed out |
+| `502` | `AI_PROVIDER_ERROR` | Provider request failed, was rejected, or timed out |
 | `502` | `INVALID_AI_RESPONSE` | Model output violated the structured or GraphQL contract |
 | `502` | `AGENT_EXECUTION_ERROR` | Router, specialist, or bounded tool workflow failed safely |
 
