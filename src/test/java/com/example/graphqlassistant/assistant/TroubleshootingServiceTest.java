@@ -74,15 +74,15 @@ class TroubleshootingServiceTest {
                     toolCall("inspect-country", "inspectSchema", "{\"typeNames\":[\"Country\"]}");
                 case 3 ->
                     toolCall(
-                        "validate-correction",
+                        "validate-original",
                         "validateOperation",
                         """
-                        {"operation":"query ListCountries { countries { code name } }"}
+                        {"operation":"query listCountries { countries { id title } }"}
                         """);
                 case 4 ->
                     toolCall(
-                        "format-correction",
-                        "formatOperation",
+                        "validate-correction",
+                        "validateOperation",
                         """
                         {"operation":"query ListCountries { countries { code name } }"}
                         """);
@@ -128,13 +128,13 @@ class TroubleshootingServiceTest {
     assertThat(requests).hasSize(5);
     assertThat(requests.get(1).toolSpecifications())
         .extracting(specification -> specification.name())
-        .contains("inspectSchema", "validateOperation", "formatOperation");
+        .containsExactlyInAnyOrder("inspectSchema", "validateOperation");
     assertThat(toolResultText(requests.get(2))).contains("Country").doesNotContain("INVALID_");
     assertThat(toolResultText(requests.get(3)))
-        .contains("valid", "true")
+        .contains("valid", "false", "id", "title")
         .doesNotContain("INVALID_");
     assertThat(toolResultText(requests.get(4)))
-        .contains("query ListCountries")
+        .contains("valid", "true")
         .doesNotContain("INVALID_");
   }
 
@@ -192,6 +192,63 @@ class TroubleshootingServiceTest {
     assertThat(response.correctedQuery())
         .contains("  country(code: $code) {", "    code", "    name");
     assertThat(response.variables()).containsEntry("code", "CA");
+  }
+
+  @Test
+  void repairsOneLineArgumentSyntaxAndInvalidFieldWithinFourToolCalls() {
+    AssistantService service =
+        service(
+            sequentialResponses(
+                troubleshootingRoute(),
+                toolCall(
+                    "validate-syntax",
+                    "validateOperation",
+                    """
+                    {"operation":"query CountryQuery($code: ID!) { country(code) { code name1 native } }"}
+                    """),
+                toolCall(
+                    "validate-schema",
+                    "validateOperation",
+                    """
+                    {"operation":"query CountryQuery($code: ID!) { country(code: $code) { code name1 native } }"}
+                    """),
+                toolCall("inspect-country", "inspectSchema", "{\"typeNames\":[\"Country\"]}"),
+                toolCall(
+                    "validate-final",
+                    "validateOperation",
+                    """
+                    {"operation":"query CountryQuery($code: ID!) { country(code: $code) { code name native } }"}
+                    """),
+                response(
+                    """
+                    {
+                      "intent":"TROUBLESHOOT",
+                      "issues":[
+                        {
+                          "issue":"Invalid country argument syntax.",
+                          "details":"The declared code variable was not passed as a named argument.",
+                          "suggestion":"Use country(code: $code)."
+                        },
+                        {
+                          "issue":"Unknown field name1 on Country.",
+                          "details":"The schema defines name instead.",
+                          "suggestion":"Replace name1 with name."
+                        }
+                      ],
+                      "operation":"query CountryQuery($code: ID!) { country(code: $code) { code name native } }",
+                      "variables":{"code":"CA"}
+                    }
+                    """)));
+
+    TroubleshootResponse response =
+        (TroubleshootResponse)
+            service.assist(
+                "debug the below query: query CountryQuery($code: ID!) { country(code) { code name1 native } }");
+
+    assertThat(response.issues()).hasSize(2);
+    assertThat(response.correctedQuery())
+        .contains("  country(code: $code) {", "    name", "    native");
+    assertThat(response.variables()).containsExactlyEntriesOf(Map.of("code", "CA"));
   }
 
   @Test

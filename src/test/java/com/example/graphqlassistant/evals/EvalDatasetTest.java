@@ -25,6 +25,6 @@ class EvalDatasetTest {
         .anySatisfy(
             evalCase ->
                 assertThat(evalCase.requiredTools())
-                    .contains("inspectSchema", "validateOperation", "formatOperation"));
+                    .contains("inspectSchema", "validateOperation"));
   }
 }

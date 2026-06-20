@@ -55,7 +55,7 @@ public final class LangChain4jAgentFactory {
         configureAgent(
                 AgenticServices.agentBuilder(TroubleshootingModelAgent.class),
                 Objects.requireNonNull(chatModel, "chatModel"),
-                Objects.requireNonNull(tools, "tools"))
+                new TroubleshootingTools(Objects.requireNonNull(tools, "tools")))
             .outputKey("troubleshootingJson")
             .build();
     TroubleshootingModelAgent workflow =
@@ -96,9 +96,7 @@ public final class LangChain4jAgentFactory {
   }
 
   private static <T> dev.langchain4j.agentic.agent.AgentBuilder<T, ?> configureAgent(
-      dev.langchain4j.agentic.agent.AgentBuilder<T, ?> builder,
-      ChatModel chatModel,
-      GraphqlAssistantTools tools) {
+      dev.langchain4j.agentic.agent.AgentBuilder<T, ?> builder, ChatModel chatModel, Object tools) {
     return builder
         .chatModel(chatModel)
         .tools(tools)

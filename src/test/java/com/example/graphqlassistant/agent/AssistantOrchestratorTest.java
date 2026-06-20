@@ -244,6 +244,36 @@ class AssistantOrchestratorTest {
   }
 
   @Test
+  void limitsTroubleshootingToSchemaInspectionAndValidationTools() {
+    AtomicReference<ChatRequest> request = new AtomicReference<>();
+    ChatModel model =
+        chatModel(
+            chatRequest -> {
+              request.set(chatRequest);
+              return response(
+                  """
+                  {
+                    "intent":"TROUBLESHOOT",
+                    "issues":[{
+                      "issue":"Unknown field.",
+                      "details":"The field is not defined.",
+                      "suggestion":"Use a defined field."
+                    }],
+                    "operation":"query Greeting { greeting }",
+                    "variables":{}
+                  }
+                  """);
+            });
+
+    LangChain4jAgentFactory.createTroubleshootingAgent(model, tools)
+        .troubleshoot("Troubleshoot query Greeting { missing }");
+
+    assertThat(request.get().toolSpecifications())
+        .extracting(specification -> specification.name())
+        .containsExactlyInAnyOrder("inspectSchema", "validateOperation");
+  }
+
+  @Test
   void keepsSpecialistInstructionsIndependentOfTheConfiguredSchema() {
     List<ChatRequest> requests = new ArrayList<>();
     ChatModel model =
@@ -325,6 +355,8 @@ class AssistantOrchestratorTest {
     String instructions = request.get().messages().toString().replaceAll("\\s+", " ");
     assertThat(instructions)
         .contains("First call validateOperation on the supplied operation")
+        .contains("For InvalidSyntax or InvalidArgumentSyntax, apply the diagnostic's exact repair")
+        .contains("Do not call inspectSchema for a syntax diagnostic")
         .contains("inspectSchema with the parent schema type names from those diagnostics")
         .contains("Never pass the operation name to inspectSchema")
         .contains("Apply all reported diagnostics in one correction")
