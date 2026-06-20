@@ -22,6 +22,13 @@ import dev.langchain4j.service.output.OutputParsingException;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Application service that converts agent orchestration outcomes into stable API responses.
+ *
+ * <p>This layer is the deterministic boundary after LLM inference: it unwraps provider failures,
+ * rejects malformed structured output, verifies routed and returned intents agree, canonicalizes
+ * GraphQL operations and variables, and emits only normalized business response models.
+ */
 public final class AssistantService {
 
   private static final String CLARIFICATION_GUIDANCE =
@@ -37,11 +44,26 @@ public final class AssistantService {
 
   private final GraphqlSchemaContext schemaContext;
 
+  /**
+   * Creates an assistant service without full-content AI request logging.
+   *
+   * @param orchestrator confidence-gated router and specialist workflow
+   * @param operationProcessor deterministic GraphQL normalizer and validator
+   */
   public AssistantService(
       AssistantOrchestrator orchestrator, GraphqlOperationProcessor operationProcessor) {
     this(orchestrator, operationProcessor, AssistantRequestLogger.disabled(), null, null);
   }
 
+  /**
+   * Creates an assistant service with provider metadata and request-scoped observability.
+   *
+   * @param orchestrator confidence-gated router and specialist workflow
+   * @param operationProcessor deterministic GraphQL normalizer and validator
+   * @param requestLogger structured AI lifecycle logger
+   * @param provider selected model provider and model metadata
+   * @param schemaContext configured schema used for grounding
+   */
   public AssistantService(
       AssistantOrchestrator orchestrator,
       GraphqlOperationProcessor operationProcessor,
@@ -55,6 +77,17 @@ public final class AssistantService {
     this.schemaContext = schemaContext;
   }
 
+  /**
+   * Executes the end-to-end natural-language GraphQL assistant use case.
+   *
+   * <p>Probabilistic specialist output is accepted only after intent consistency checks, GraphQL
+   * parsing, schema validation, variable coercion, and response normalization.
+   *
+   * @param prompt user request to generate or troubleshoot a GraphQL operation
+   * @return normalized generation or troubleshooting response
+   * @throws ClarificationRequiredException when routing confidence or prompt detail is insufficient
+   * @throws InvalidAgentResponseException when model output violates the response contract
+   */
   public AssistantResponse assist(String prompt) {
     if (provider != null && schemaContext != null) {
       requestLogger.requestStarted(

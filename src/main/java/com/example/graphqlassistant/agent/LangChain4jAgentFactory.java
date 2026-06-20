@@ -10,8 +10,16 @@ import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.tool.ToolErrorHandlerResult;
 import java.util.Objects;
 
+/**
+ * Builds the LangChain4j router and specialist agents used by the assistant.
+ *
+ * <p>The factory centralizes prompt-bound agent topology, bounded tool-calling rounds, structured
+ * output parsing, and graceful tool error feedback. Generation and troubleshooting use separate
+ * specialist prompts so each model context stays focused on one business objective.
+ */
 public final class LangChain4jAgentFactory {
 
+  /** Maximum model/tool round trips, including the final model response after the tool budget. */
   public static final int MAX_TOOL_CALLING_ROUNDS = GraphqlAssistantTools.MAX_TOOL_CALLS + 1;
 
   private static final String INVALID_TOOL_ARGUMENTS =
@@ -26,12 +34,25 @@ public final class LangChain4jAgentFactory {
     throw new AssertionError("No instances");
   }
 
+  /**
+   * Creates the lightweight LLM intent-classification service.
+   *
+   * @param chatModel configured provider-neutral chat model
+   * @return router that emits structured routing decisions
+   */
   public static AssistantRouter createRouter(ChatModel chatModel) {
     return AiServices.builder(AssistantRouter.class)
         .chatModel(Objects.requireNonNull(chatModel, "chatModel"))
         .build();
   }
 
+  /**
+   * Creates a schema-grounded generation agent with a bounded ReAct-style tool loop.
+   *
+   * @param chatModel configured provider-neutral chat model
+   * @param tools deterministic schema inspection and validation capabilities
+   * @return typed adapter over the model's JSON structured output
+   */
   public static GenerationAgent createGenerationAgent(
       ChatModel chatModel, GraphqlAssistantTools tools) {
     GenerationModelAgent specialist =
@@ -49,6 +70,13 @@ public final class LangChain4jAgentFactory {
     return new ParsedGenerationAgent(workflow);
   }
 
+  /**
+   * Creates a troubleshooting agent that iteratively diagnoses and repairs GraphQL operations.
+   *
+   * @param chatModel configured provider-neutral chat model
+   * @param tools deterministic schema inspection and validation capabilities
+   * @return typed adapter over the model's JSON structured output
+   */
   public static TroubleshootingAgent createTroubleshootingAgent(
       ChatModel chatModel, GraphqlAssistantTools tools) {
     TroubleshootingModelAgent specialist =
@@ -66,6 +94,13 @@ public final class LangChain4jAgentFactory {
     return new ParsedTroubleshootingAgent(workflow);
   }
 
+  /**
+   * Creates the conditional multi-agent workflow that dispatches only the routed specialist.
+   *
+   * @param generationAgent specialist for natural-language-to-GraphQL generation
+   * @param troubleshootingAgent specialist for diagnosis and correction
+   * @return workflow that selects a specialist from the routing intent held in agent state
+   */
   public static SpecialistWorkflow createSpecialistWorkflow(
       GenerationAgent generationAgent, TroubleshootingAgent troubleshootingAgent) {
     UntypedAgent conditionalSpecialist =

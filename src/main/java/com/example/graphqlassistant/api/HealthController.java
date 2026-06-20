@@ -8,9 +8,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/** Exposes a readiness signal after Spring configuration and GraphQL schema loading succeed. */
 @RestController
 public class HealthController {
 
+  /**
+   * Reports that the assistant application completed startup validation.
+   *
+   * @return readiness payload with an {@code UP} status
+   */
   @GetMapping("/health")
   @Operation(
       summary = "Check application health",

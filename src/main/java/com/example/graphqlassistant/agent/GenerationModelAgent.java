@@ -14,6 +14,12 @@ import dev.langchain4j.service.V;
 @FunctionalInterface
 public interface GenerationModelAgent {
 
+  /**
+   * Runs the raw LLM generation loop, including schema inspection and operation validation tools.
+   *
+   * @param prompt untrusted natural-language generation request
+   * @return JSON structured output consumed by {@link ParsedGenerationAgent}
+   */
   @Agent(name = "graphqlGeneration", description = "Generates schema-grounded GraphQL operations")
   @SystemMessage(
       """

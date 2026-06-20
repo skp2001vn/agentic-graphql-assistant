@@ -18,6 +18,12 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+/**
+ * Translates API, provider, and agent failures into stable error contracts.
+ *
+ * <p>The mapping deliberately hides raw LLM, provider, and tool exceptions while retaining a
+ * request identifier and coarse failure category for safe observability.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 

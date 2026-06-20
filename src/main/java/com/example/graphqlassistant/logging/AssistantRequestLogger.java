@@ -9,6 +9,13 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Emits structured observability events across the AI request lifecycle.
+ *
+ * <p>The logger correlates prompts, routing, model inference, tool calls, and normalized responses.
+ * Full-content logging is explicitly configurable, and configured provider credentials are redacted
+ * before serialization to reduce secret exposure.
+ */
 public final class AssistantRequestLogger {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AssistantRequestLogger.class);
@@ -21,6 +28,13 @@ public final class AssistantRequestLogger {
 
   private final String providerApiKey;
 
+  /**
+   * Creates an enabled structured logger.
+   *
+   * @param fullContentEnabled whether schemas, prompts, model output, and tool payloads are logged
+   * @param objectMapper serializer for structured model and tool data
+   * @param providerApiKey credential to redact from logged content
+   */
   public AssistantRequestLogger(
       boolean fullContentEnabled, ObjectMapper objectMapper, String providerApiKey) {
     this(true, fullContentEnabled, objectMapper, providerApiKey);
@@ -37,10 +51,23 @@ public final class AssistantRequestLogger {
     this.providerApiKey = providerApiKey;
   }
 
+  /**
+   * Creates a no-op logger for tests or compositions that do not require AI telemetry.
+   *
+   * @return disabled logger instance
+   */
   public static AssistantRequestLogger disabled() {
     return new AssistantRequestLogger(false, false, new ObjectMapper(), null);
   }
 
+  /**
+   * Logs provider metadata and optionally the schema and prompt entering the LLM workflow.
+   *
+   * @param provider selected inference provider
+   * @param model selected model identifier
+   * @param schema GraphQL SDL supplied as grounding context
+   * @param prompt user request supplied to the agent pipeline
+   */
   public void requestStarted(String provider, String model, String schema, String prompt) {
     if (!enabled) {
       return;
@@ -59,6 +86,11 @@ public final class AssistantRequestLogger {
     event.log("Assistant request started");
   }
 
+  /**
+   * Logs the confidence-gated routing branch selected for the request.
+   *
+   * @param intent structured intent emitted by the router
+   */
   public void agentSelected(RoutingIntent intent) {
     if (!enabled) {
       return;
@@ -78,6 +110,13 @@ public final class AssistantRequestLogger {
         .log("Assistant agent selected");
   }
 
+  /**
+   * Logs completion of a provider inference call and optionally its raw response.
+   *
+   * @param provider inference provider
+   * @param model model identifier
+   * @param response LangChain4j response including model metadata and content
+   */
   public void aiResponse(String provider, String model, ChatResponse response) {
     if (!enabled) {
       return;
@@ -95,6 +134,15 @@ public final class AssistantRequestLogger {
     event.log("Assistant AI response received");
   }
 
+  /**
+   * Measures and logs a deterministic tool invocation around an AI agent action.
+   *
+   * @param toolName stable tool identifier
+   * @param input structured tool input
+   * @param invocation tool operation to execute
+   * @param <T> tool output type
+   * @return tool output
+   */
   public <T> T toolCall(String toolName, Object input, Supplier<T> invocation) {
     if (!enabled) {
       return invocation.get();
@@ -110,6 +158,11 @@ public final class AssistantRequestLogger {
     }
   }
 
+  /**
+   * Logs the final response after model output has been normalized and schema-validated.
+   *
+   * @param response public assistant response
+   */
   public void normalizedResponse(AssistantResponse response) {
     if (!enabled) {
       return;
