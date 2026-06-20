@@ -546,8 +546,8 @@ configuration when available, and record readiness honestly.
 ./mvnw spring-boot:run
 curl http://localhost:8080/health
 curl -X POST http://localhost:8080/assistant \
-  -H 'Content-Type: text/plain' \
-  --data 'Generate a query that lists country codes and names.'
+  -H 'Content-Type: text/plain; charset=UTF-8' \
+  --data 'generate the query to get the list of country'
 ```
 
 ## Final Definition of Done

@@ -196,18 +196,42 @@ The orchestrator delegates to exactly one specialist agent. The specialist may
 call approved schema/operation tools, but it cannot access the filesystem,
 shell, network destinations, application secrets, or GraphQL execution.
 
+The success examples below were captured with the default local model. Exact
+schema-valid field selections and diagnostic wording may vary by model run,
+while the documented JSON contracts remain stable.
+
 #### Generate response
 
 Status: `200 OK`
+
+Example request body:
+
+```text
+generate the query to get the country by code
+```
+
+Example response:
 
 ```json
 {
   "intent": "GENERATE",
   "query": [
-    "query GetCountry($code: ID!) {",
+    "query GetCountryByCode($code: ID!) {",
     "  country(code: $code) {",
     "    code",
     "    name",
+    "    native",
+    "    emoji",
+    "    capital",
+    "    currency",
+    "    continent {",
+    "      code",
+    "      name",
+    "    }",
+    "    languages {",
+    "      code",
+    "      name",
+    "    }",
     "  }",
     "}"
   ],
@@ -229,14 +253,32 @@ Required fields:
 
 Status: `200 OK`
 
+Example request body:
+
+```text
+Troubleshoot query listCountries { countries { id title } } and return a corrected query.
+```
+
+Example response:
+
 ```json
 {
   "intent": "TROUBLESHOOT",
   "issues": [
     {
-      "issue": "Unknown field 'title' on type 'Country'.",
-      "details": "The schema defines 'name', not 'title'.",
-      "suggestion": "Replace 'title' with 'name'."
+      "issue": "Operation name must start with an uppercase letter",
+      "details": "The operation name 'listCountries' does not follow the PascalCase convention.",
+      "suggestion": "Rename the operation to 'ListCountries'."
+    },
+    {
+      "issue": "Field 'id' is undefined in type 'Country'",
+      "details": "The field 'id' does not exist in the 'Country' type.",
+      "suggestion": "Use the existing field 'code' instead of 'id'."
+    },
+    {
+      "issue": "Field 'title' is undefined in type 'Country'",
+      "details": "The field 'title' does not exist in the 'Country' type.",
+      "suggestion": "Use the existing field 'name' instead of 'title'."
     }
   ],
   "correctedQuery": [
@@ -277,8 +319,27 @@ malformed success response.
 
 Status: `422 Unprocessable Content`
 
-The error `code` is `CLARIFICATION_REQUIRED`, and `message` explains what
-information the client should add. The service does not guess.
+Example request body:
+
+```text
+Help
+```
+
+Example response:
+
+```json
+{
+  "timestamp": "2026-06-20T20:32:39.319041Z",
+  "requestId": "docs-clarification",
+  "status": 422,
+  "code": "CLARIFICATION_REQUIRED",
+  "message": "Specify what operation you want to generate or include the operation to troubleshoot.",
+  "details": []
+}
+```
+
+The service does not guess when required intent or operation context is
+missing.
 
 ### 7.2 `GET /health`
 
@@ -307,8 +368,8 @@ All handled errors use one structure:
 
 ```json
 {
-  "timestamp": "2026-06-18T15:00:00Z",
-  "requestId": "8cd91a0b-93c2-4e9a-9dce-f7eed67f52a5",
+  "timestamp": "2026-06-20T20:32:39.319041Z",
+  "requestId": "docs-clarification",
   "status": 422,
   "code": "CLARIFICATION_REQUIRED",
   "message": "Specify what operation you want to generate or include the operation to troubleshoot.",
@@ -322,11 +383,11 @@ Standard mappings:
 | --- | --- | --- |
 | `400` | `INVALID_REQUEST` | Empty or malformed request |
 | `413` | `REQUEST_TOO_LARGE` | Body exceeds 100 KB |
-| `415` | `UNSUPPORTED_MEDIA_TYPE` | Content type is not `text/plain` |
+| `415` | `UNSUPPORTED_MEDIA_TYPE` | Content type is not UTF-8 `text/plain` |
 | `422` | `CLARIFICATION_REQUIRED` | Prompt is ambiguous or insufficient |
-| `502` | `AI_PROVIDER_ERROR` | Selected provider is unavailable or rejects the call |
-| `502` | `INVALID_AI_RESPONSE` | Model output cannot satisfy the structured contract |
-| `502` | `AGENT_EXECUTION_ERROR` | Tool failure or bounded tool loop cannot complete safely |
+| `502` | `AI_PROVIDER_ERROR` | Provider request fails, is rejected, or times out |
+| `502` | `INVALID_AI_RESPONSE` | Model output violates the structured or GraphQL contract |
+| `502` | `AGENT_EXECUTION_ERROR` | Router, specialist, or bounded tool workflow fails safely |
 | `500` | `INTERNAL_ERROR` | Unexpected internal failure |
 
 Stack traces, credentials, and internal exception details are never returned to
@@ -549,8 +610,8 @@ Manual startup verification:
 ```text
 curl http://localhost:8080/health
 curl -X POST http://localhost:8080/assistant \
-  -H 'Content-Type: text/plain' \
-  --data 'Generate a query that lists country codes and names.'
+  -H 'Content-Type: text/plain; charset=UTF-8' \
+  --data 'generate the query to get the list of country'
 ```
 
 ## 16. Success Criteria
