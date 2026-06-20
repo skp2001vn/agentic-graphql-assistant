@@ -92,10 +92,9 @@ Both measured warm smoke requests completed under the 30-second target.
   than weakening loop protection. LangChain4j documents the API limit as the
   number of model responses containing tool calls:
   <https://docs.langchain4j.dev/apidocs/dev/langchain4j/service/AiServices.html#maxToolCallingRoundTrips(int)>.
-- Full-content logging is enabled by default and can include schemas, prompts,
-  operations, variables, AI responses, and tool data. Disable it with
-  `ASSISTANT_LOGGING_FULL_CONTENT_ENABLED=false` before using sensitive
-  content.
+- Full-content logging is disabled by default. Enabling it with
+  `ASSISTANT_LOGGING_FULL_CONTENT_ENABLED=true` can retain schemas, prompts,
+  operations, variables, AI responses, and tool data.
 - OpenAI configuration is covered by automated tests but was not live-tested
   because the approved final verification targets the default Ollama provider.
 - No production deployment, authentication, authorization, persistence,

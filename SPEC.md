@@ -83,6 +83,8 @@ server:
 assistant:
   schema:
     location: classpath:schema.graphql
+  logging:
+    full-content-enabled: false
   request:
     max-size: 100KB
   ai:
@@ -109,6 +111,8 @@ Rules:
 - A missing, unreadable, empty, or invalid schema causes startup to fail.
 - The application does not require the selected AI provider to be reachable at
   startup.
+- Full-content logging is disabled by default and requires an explicit
+  configuration opt-in.
 - Agent tool-call rounds are bounded to prevent loops and protect the latency
   target.
 - The end-to-end warm response target is 30 seconds. A 60-second hard request
@@ -410,23 +414,19 @@ clients.
 
 ## 11. Logging and Observability
 
-Each request receives or generates a request ID. Logs include:
+Each request receives or generates a request ID. Operational logs include:
 
 - request ID
 - provider and model
-- schema content
-- complete user prompt
-- pasted GraphQL operation
-- complete raw AI response
 - agent selected and tool-call trace
-- normalized API response
 - status, latency, and error category
 
-This intentionally logs potentially sensitive content because it was explicitly
-requested. The README and startup documentation must prominently warn that
-prompts, schemas, operations, variables, and AI responses may contain secrets or
-private data. OpenAI mode also sends schema and prompt content to an external
-service. API keys and authorization headers must never be logged.
+Full-content logging is an explicit opt-in. When enabled, logs also include
+schema content, complete user prompts and pasted operations, complete raw AI
+responses, tool inputs and outputs, variables, and normalized API responses.
+Documentation must explain that this content may contain secrets or private
+data. OpenAI mode also sends schema and prompt content to an external service.
+API keys and authorization headers must never be logged.
 
 The initial version uses application logs only and has no metrics backend,
 distributed tracing backend, or persisted audit store.
@@ -578,7 +578,7 @@ The initial release is complete when:
     provider itself can meet that target.
 13. `./mvnw verify` passes without requiring live AI services.
 14. README documentation explains setup, provider selection, example requests,
-    response contracts, and the full-content logging risk.
+    response contracts, and the opt-in full-content logging risk.
 15. Agent routing and read-only tool calling are bounded, observable, and
     covered by tests.
 16. Deterministic evals meet all hard thresholds.

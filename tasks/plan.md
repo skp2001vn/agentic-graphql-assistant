@@ -384,8 +384,8 @@ Dependencies: Tasks 3–8
 
 ### Outcome
 
-Log the explicitly approved full request/response content and operational
-metadata while protecting provider credentials.
+Log operational metadata by default and support explicitly enabled full
+request/response content while protecting provider credentials.
 
 ### Likely files
 
@@ -397,12 +397,13 @@ metadata while protecting provider credentials.
 
 ### Acceptance criteria
 
-- Logs contain request ID, provider/model, selected agent, schema, prompt, raw
-  AI response, normalized response, tool names, complete tool inputs/outputs,
+- Default logs contain request ID, provider/model, selected agent, tool names,
   status, latency, and error category.
+- Explicitly enabled full-content logs also contain schema, prompt, raw AI
+  response, normalized response, and complete tool inputs/outputs.
 - Logs never contain OpenAI API keys or authorization headers.
-- Full-content logging and its privacy risk are obvious in configuration and
-  later README documentation.
+- Full-content logging is disabled by default, and its opt-in privacy risk is
+  documented in configuration and the README.
 - Request ID is returned in errors and participates in all request log entries.
 - Logging tests verify required content and credential exclusion.
 

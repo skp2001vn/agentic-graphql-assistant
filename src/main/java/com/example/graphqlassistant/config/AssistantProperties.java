@@ -247,7 +247,7 @@ public class AssistantProperties {
   /** Configures whether prompts, schemas, model output, and tool payloads are logged in full. */
   public static class Logging {
 
-    private boolean fullContentEnabled = true;
+    private boolean fullContentEnabled;
 
     /**
      * Reports whether full AI request and response content is included in structured logs.
