@@ -41,9 +41,6 @@ There is no user interface in the initial version.
 - Spring MVC
 - Jackson
 - GraphQL Java 25 for SDL parsing and GraphQL operation parsing/printing
-  - `25` is the GraphQL Java library version, not the Java language/runtime
-    version. GraphQL Java 25 is compatible with this project's Java 21 runtime;
-    changing it to GraphQL Java 21 would select an older library release.
 - springdoc-openapi 3.0.3 with Swagger UI
 - JUnit 5 and Spring Boot Test
 - LangChain4j agentic workflow and tool-calling APIs
