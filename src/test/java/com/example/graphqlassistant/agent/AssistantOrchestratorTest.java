@@ -15,6 +15,7 @@ import graphql.schema.idl.SchemaParser;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -186,6 +187,19 @@ class AssistantOrchestratorTest {
   }
 
   @Test
+  void rejectsVariableNamesThatCollideAfterSigilNormalization() {
+    assertThatThrownBy(
+            () ->
+                new SpecialistResult(
+                    RoutingIntent.GENERATE,
+                    List.of(),
+                    "query Greeting { greeting }",
+                    Map.of("code", "CA", "$code", "US")))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Variable names must be unique and nonblank");
+  }
+
+  @Test
   void buildsAToollessTypedRouterWithLangChain4jAiServices() {
     AtomicReference<ChatRequest> request = new AtomicReference<>();
     ChatModel model =
@@ -279,6 +293,41 @@ class AssistantOrchestratorTest {
 
     assertThat(request.get().messages().toString())
         .contains("\"variables\":{\"<variableName>\":\"<runtime value>\"}");
+  }
+
+  @Test
+  void directsTroubleshootingToInspectDiagnosticTypesBeforeCorrecting() {
+    AtomicReference<ChatRequest> request = new AtomicReference<>();
+    ChatModel model =
+        chatModel(
+            chatRequest -> {
+              request.set(chatRequest);
+              return response(
+                  """
+                  {
+                    "intent":"TROUBLESHOOT",
+                    "issues":[{
+                      "issue":"Unknown field.",
+                      "details":"The field is not defined.",
+                      "suggestion":"Use a defined field."
+                    }],
+                    "operation":"query Greeting { greeting }",
+                    "variables":{}
+                  }
+                  """);
+            });
+
+    LangChain4jAgentFactory.createTroubleshootingAgent(model, tools)
+        .troubleshoot("Troubleshoot query Greeting { missing }");
+
+    String instructions = request.get().messages().toString().replaceAll("\\s+", " ");
+    assertThat(instructions)
+        .contains("First call validateOperation on the supplied operation")
+        .contains("inspectSchema with the parent schema type names from those diagnostics")
+        .contains("Never pass the operation name to inspectSchema")
+        .contains("Apply all reported diagnostics in one correction")
+        .contains("Never validate the same invalid correction twice")
+        .contains("Variable JSON keys never include the GraphQL $ prefix");
   }
 
   @Test

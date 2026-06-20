@@ -21,6 +21,7 @@ import graphql.schema.idl.SchemaParser;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import org.junit.jupiter.api.Test;
@@ -191,6 +192,65 @@ class TroubleshootingServiceTest {
     assertThat(response.correctedQuery())
         .contains("  country(code: $code) {", "    code", "    name");
     assertThat(response.variables()).containsEntry("code", "<runtime value>");
+  }
+
+  @Test
+  void correctsMultipleInvalidFieldsAndNormalizesVariableSigils() {
+    AssistantService service =
+        service(
+            sequentialResponses(
+                troubleshootingRoute(),
+                toolCall(
+                    "validate-original",
+                    "validateOperation",
+                    """
+                    {"operation":"query CountryQuery($code: ID!) { country(code: $code) { code name1 native1234 } }"}
+                    """),
+                toolCall("inspect-country", "inspectSchema", "{\"typeNames\":[\"Country\"]}"),
+                toolCall(
+                    "validate-correction",
+                    "validateOperation",
+                    """
+                    {"operation":"query CountryQuery($code: ID!) { country(code: $code) { code name native } }"}
+                    """),
+                response(
+                    """
+                    {
+                      "intent":"TROUBLESHOOT",
+                      "issues":[
+                        {
+                          "issue":"Unknown field name1 on Country.",
+                          "details":"The schema defines name instead.",
+                          "suggestion":"Replace name1 with name."
+                        },
+                        {
+                          "issue":"Unknown field native1234 on Country.",
+                          "details":"The schema defines native instead.",
+                          "suggestion":"Replace native1234 with native."
+                        }
+                      ],
+                      "operation":"query CountryQuery($code: ID!) { country(code: $code) { code name native } }",
+                      "variables":{"$code":"<runtime value>"}
+                    }
+                    """)));
+
+    TroubleshootResponse response =
+        (TroubleshootResponse)
+            service.assist(
+                """
+                debug the below query:
+                query CountryQuery($code: ID!) {
+                  country(code: $code) {
+                    code
+                    name1
+                    native1234
+                  }
+                }
+                """);
+
+    assertThat(response.issues()).hasSize(2);
+    assertThat(response.correctedQuery()).contains("    name", "    native");
+    assertThat(response.variables()).containsExactlyEntriesOf(Map.of("code", "<runtime value>"));
   }
 
   @Test

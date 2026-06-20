@@ -29,8 +29,22 @@ public record SpecialistResult(
     if (operation == null || operation.isBlank()) {
       throw new IllegalArgumentException("Specialist operation must not be blank");
     }
-    variables =
-        Collections.unmodifiableMap(
-            new LinkedHashMap<>(Objects.requireNonNull(variables, "variables")));
+    variables = normalizeVariableNames(Objects.requireNonNull(variables, "variables"));
+  }
+
+  private static Map<String, Object> normalizeVariableNames(Map<String, Object> variables) {
+    Map<String, Object> normalized = new LinkedHashMap<>();
+    variables.forEach(
+        (name, value) -> {
+          if (name == null) {
+            throw new IllegalArgumentException("Variable name must not be null");
+          }
+          String normalizedName = name.startsWith("$") ? name.substring(1) : name;
+          if (normalizedName.isBlank() || normalized.containsKey(normalizedName)) {
+            throw new IllegalArgumentException("Variable names must be unique and nonblank");
+          }
+          normalized.put(normalizedName, value);
+        });
+    return Collections.unmodifiableMap(normalized);
   }
 }
