@@ -17,8 +17,8 @@ import java.util.concurrent.TimeoutException;
  * <p>The orchestrator implements a confidence-gated agentic workflow: a router first performs
  * intent classification, low-confidence requests become clarification outcomes, and accepted
  * requests run through a specialist with a hard timeout and tool-call guardrails. The final
- * operation is validated outside the large language model (LLM), keeping schema correctness in
- * deterministic application code rather than relying on probabilistic generation alone.
+ * operation is validated outside the LLM, keeping schema correctness in deterministic application
+ * code rather than relying on probabilistic generation alone.
  */
 public final class AssistantOrchestrator {
 

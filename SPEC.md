@@ -268,13 +268,13 @@ Required fields:
 - `variables`: corrected or inferred JSON variables object; unresolved values
   are replaced with realistic type-compatible examples
 
-The AI is responsible for identifying troubleshooting issues. The Java service
-does not independently construct an issue list from deterministic GraphQL
-validation. It does, however, treat model output as untrusted: structured output
-is parsed and validated, and returned GraphQL operations are syntax/schema
-checked and pretty-printed before being sent to the client. Unusable model
-output produces a provider-response error rather than an unsafe or malformed
-success response.
+The troubleshooting specialist is responsible for identifying issues.
+Deterministic response processing does not independently construct an issue list
+from GraphQL validation. It does treat LLM output as untrusted: structured
+output is parsed and validated, and returned GraphQL operations are
+syntax/schema checked and pretty-printed before being sent to the client.
+Unusable LLM output produces a provider-response error rather than an unsafe or
+malformed success response.
 
 #### Ambiguous or insufficient prompt
 
@@ -342,7 +342,7 @@ clients.
   the initial version.
 - Build the workflow with LangChain4j primitives:
   - AI Services for typed router and specialist interfaces
-  - structured outputs mapped to Java records
+  - structured outputs mapped to typed records
   - LangChain4j agentic workflow APIs for conditional routing
   - LangChain4j `@Tool` function calling for deterministic GraphQL functions
   - LangChain4j Ollama and OpenAI model integrations
@@ -359,9 +359,9 @@ clients.
   - troubleshooting agent
 - The router returns `GENERATE`, `TROUBLESHOOT`, or
   `CLARIFICATION_REQUIRED`, plus a concise reason and confidence.
-- Java validates the router's structured result. Unknown/malformed output is an
-  invalid AI response; low-confidence or insufficient requests become
-  clarification responses rather than guesses.
+- The orchestration layer validates the router's structured result.
+  Unknown/malformed output is an invalid AI response; low-confidence or
+  insufficient requests become clarification responses rather than guesses.
 - The router itself has no tools. Only the selected specialist receives
   GraphQL tools.
 - A normal request therefore uses at least two model calls. Tool use can add
@@ -375,7 +375,7 @@ clients.
   - `validateOperation`: parse and validate a proposed operation against the
     configured schema and return structured diagnostics
   - `formatOperation`: return a canonical pretty-printed operation
-- Tool inputs and outputs use typed Java records and are validated at their
+- Tool inputs and outputs use typed records and are validated at their
   boundaries.
 - Cap a request at four tool-call rounds by default.
 - Record tool names, complete inputs/outputs, duration, and outcome in logs;
@@ -603,5 +603,5 @@ The initial release is complete when:
 - Unbounded autonomous agents or tool loops
 - Tools with filesystem, shell, arbitrary network, secret, or GraphQL execution
   access
-- Deterministic Java-generated troubleshooting issue reports
+- Deterministic application-generated troubleshooting issue reports
 - Production network hardening, rate limiting, or TLS termination

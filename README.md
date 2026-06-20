@@ -1,8 +1,8 @@
 # GraphQL Assistant
 
-GraphQL Assistant is an educational Java project that demonstrates how to
-combine large language models with deterministic GraphQL tooling. Its single
-`/assistant` endpoint supports two workflows:
+GraphQL Assistant is a Spring Boot API that combines LLM agents with
+deterministic GraphQL tooling. Its single `/assistant` endpoint supports two
+workflows:
 
 - generate a named, schema-valid GraphQL query or mutation from natural language
 - troubleshoot a submitted operation and return diagnoses plus a validated
@@ -24,7 +24,7 @@ model output against one configured GraphQL SDL schema before returning it.
   providing a RAG-style pattern without embeddings or a vector database.
 - **Prompt engineering:** uses separate system instructions for routing,
   generation, and troubleshooting.
-- **Structured output:** converts model-produced JSON into typed Java records
+- **Structured output:** converts model-produced JSON into typed domain records
   before business processing.
 - **Guardrails:** validates prompt boundaries, tool inputs, GraphQL syntax,
   schema compatibility, variable shapes, and final response contracts.
@@ -37,55 +37,74 @@ model output against one configured GraphQL SDL schema before returning it.
 
 ## How it works
 
-```text
-text/plain prompt
-       |
-       v
-request validation and correlation ID
-       |
-       v
-AI intent router
-  |         |                 |
-  |         |                 +--> clarification response
-  |         +--> troubleshooting specialist
-  +------------> generation specialist
-                    |
-                    v
-          bounded read-only tools
-          - inspectSchema
-          - validateOperation
-                    |
-                    v
-         structured specialist result
-                    |
-                    v
-      Java parsing and schema validation
-      variable coercion and AST formatting
-                    |
-                    v
-          normalized JSON response
+```mermaid
+flowchart TD
+    A["POST /assistant<br/>UTF-8 text prompt"] --> B["Validate request<br/>Assign request ID"]
+    B --> C["LLM intent router"]
+
+    C -->|"GENERATE"| G1["Generation specialist"]
+    G1 --> G2["inspectSchema<br/>Required schema retrieval"]
+    G2 --> G3["Draft one named operation<br/>with declared variables"]
+    G3 --> G4["validateOperation<br/>Repair and revalidate if needed"]
+    G4 --> S["Structured specialist result"]
+
+    C -->|"TROUBLESHOOT"| T1["Troubleshooting specialist"]
+    T1 --> T2["validateOperation<br/>Diagnose submitted operation"]
+    T2 -->|"Already valid"| S
+    T2 -->|"Schema context needed"| T3["inspectSchema<br/>Retrieve relevant types"]
+    T2 -->|"Syntax-only repair"| T4["Build complete correction"]
+    T3 --> T4
+    T4 --> T5["validateOperation<br/>Verify corrected operation"]
+    T5 --> S
+
+    C -->|"CLARIFICATION_REQUIRED<br/>or confidence below threshold"| Q["Return 422 clarification guidance<br/>No specialist or tools run"]
+
+    S --> D["Deterministic response processing<br/>Check intent and response contract<br/>Parse and validate GraphQL<br/>Coerce variables and format the AST"]
+    D --> R["Return normalized<br/>GENERATE or TROUBLESHOOT JSON"]
 ```
 
-The architecture combines probabilistic AI work with deterministic guardrails:
+Every request starts with boundary validation and request-ID assignment. The
+LLM router then chooses exactly one of three paths.
 
-1. A dedicated router classifies the prompt as `GENERATE`, `TROUBLESHOOT`, or
-   `CLARIFICATION_REQUIRED`.
-2. A confidence threshold sends uncertain requests to clarification instead of
-   choosing a specialist blindly.
-3. Only the selected specialist runs.
-4. The specialist retrieves compact schema context and validates candidate
-   operations through bounded, read-only tools.
-5. Tool inputs are validated, model/tool round trips are capped, and tools
-   cannot access the filesystem, shell, arbitrary network, secrets, or a
-   GraphQL execution endpoint.
-6. The model returns structured JSON, which is parsed into typed Java records.
-7. Java independently parses the GraphQL AST, requires exactly one named query
-   or mutation, validates it against the schema, rejects literal field
-   arguments, checks variable shapes, and canonically formats the operation.
+### Generation path
 
-The router has no tools. Final formatting is performed by Java, not delegated
-to the specialist model. These boundaries reduce hallucination risk without
-treating model output as trusted.
+1. The generation specialist receives the natural-language request.
+2. It must call `inspectSchema` to retrieve relevant root operations, types,
+   fields, and argument definitions.
+3. It drafts one named query or mutation using declared variables rather than
+   literal field arguments.
+4. It calls `validateOperation` and repairs any reported issues before
+   returning structured output.
+5. The orchestration and operation-processing layers verify the intent,
+   response contract, GraphQL document, schema compatibility, and variable
+   values before returning a `GENERATE` response.
+
+### Troubleshooting path
+
+1. The troubleshooting specialist first calls `validateOperation` on the
+   submitted operation.
+2. If the operation is already valid, it is preserved and returned with an
+   empty issue list.
+3. Syntax-only diagnostics can be corrected directly. Schema diagnostics cause
+   the specialist to call `inspectSchema` for the relevant parent types.
+4. The specialist preserves valid selections, creates one complete correction,
+   and calls `validateOperation` again.
+5. The response-processing layer verifies the corrected operation and returns
+   the diagnoses, corrected query, and variables in a `TROUBLESHOOT` response.
+
+### Clarification path
+
+If the router selects `CLARIFICATION_REQUIRED` or reports confidence below the
+configured threshold, the request stops before specialist execution. No tools
+are called. The API returns `422 CLARIFICATION_REQUIRED` with guidance asking
+the user to specify the desired operation or include the operation to
+troubleshoot.
+
+The router has no tools. Specialist tools are read-only, their inputs are
+validated, and model/tool round trips are capped. Final acceptance does not
+trust LLM output alone: deterministic processing enforces the response
+contract, parses the GraphQL AST, validates it against the configured schema,
+checks variable shapes, and produces canonical formatting.
 
 ## Documentation
 
@@ -337,7 +356,8 @@ Example response:
 The response uses the `TROUBLESHOOT` intent and returns:
 
 - `issues`: model-produced diagnoses and repair guidance
-- `correctedQuery`: the complete corrected operation after Java validation
+- `correctedQuery`: the complete corrected operation after deterministic
+  validation
 - `variables`: runtime values for declared GraphQL variables
 
 ### Errors

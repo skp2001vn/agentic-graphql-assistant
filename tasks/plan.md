@@ -222,8 +222,8 @@ agents, backed by typed, deterministic GraphQL tools.
 - The router produces a typed `GENERATE`, `TROUBLESHOOT`, or
   `CLARIFICATION_REQUIRED` decision with reason and confidence.
 - The router has no tools and cannot produce the final API answer.
-- Java validates routing output and converts low-confidence/insufficient
-  requests into clarification rather than guessing.
+- The orchestration layer validates routing output and converts
+  low-confidence/insufficient requests into clarification rather than guessing.
 - The orchestrator routes each accepted request to exactly one specialist
   agent.
 - The agents are stateless between requests.
@@ -238,7 +238,7 @@ agents, backed by typed, deterministic GraphQL tools.
 - Tool calls are capped at four rounds by default and respect the overall
   timeout.
 - Invalid tool arguments and tool-loop exhaustion fail predictably.
-- The final Java boundary independently validates returned operations.
+- The final application boundary independently validates returned operations.
 - Tests cover routing, tool selection, tool output, invalid arguments, and loop
   limits.
 - Tests prove that the router runs before the specialist and malformed router
@@ -318,7 +318,8 @@ AI-identified issues plus the corrected operation.
 
 ### Acceptance criteria
 
-- The model, rather than Java validation logic, identifies and explains issues.
+- The troubleshooting specialist, rather than deterministic validation logic,
+  identifies and explains issues.
 - The orchestrator selects the troubleshooting agent, which can inspect the
   schema and validate/format the correction through tools.
 - A successful response includes every reported issue, its details and
