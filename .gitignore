@@ -8,3 +8,5 @@ target/
 .DS_Store
 *.log
 .env
+/AGENTS.md
+/.codex/skills/codex-agent-lifecycle/
