@@ -1,37 +1,91 @@
 # GraphQL Assistant
 
-GraphQL Assistant is a local, stateless Java API that turns natural-language
-requests into schema-valid GraphQL operations and diagnoses pasted operations.
-It uses a bounded AI agent workflow, grounds model output in one configured
-GraphQL SDL schema, and validates the final result again in Java.
+GraphQL Assistant is an educational Java project that demonstrates how to
+combine large language models with deterministic GraphQL tooling. Its single
+`/assistant` endpoint supports two workflows:
 
-It never executes GraphQL operations, retains chat history, or modifies the
-configured schema.
+- generate a named, schema-valid GraphQL query or mutation from natural language
+- troubleshoot a submitted operation and return diagnoses plus a validated
+  correction
 
-## At a glance
+The application uses local Ollama `qwen3:8b` by default and can use OpenAI
+instead. It is stateless, never executes generated operations, and validates
+model output against one configured GraphQL SDL schema before returning it.
 
-- Java 21 and Spring Boot
-- LangChain4j agent routing and tool calling
-- Local Ollama inference by default
-- Optional OpenAI provider
-- GraphQL Java parsing, schema validation, variable coercion, and formatting
-- Stateless `text/plain` API
-- OpenAPI and Swagger UI
-- Deterministic offline evaluations and optional live Ollama evaluations
+## AI Concepts Covered
 
-> [!CAUTION]
-> Full-content logging is enabled by default. Logs can contain the complete
-> schema, prompts, pasted operations, variables, model responses, and tool
-> inputs and outputs. Disable it before using sensitive content:
->
-> ```bash
-> export ASSISTANT_LOGGING_FULL_CONTENT_ENABLED=false
-> ```
->
-> OpenAI mode sends prompts and schema-derived content to OpenAI. The service
-> has no authentication and intentionally binds to `127.0.0.1`. Do not expose
-> it to an untrusted network without authentication, authorization, rate
-> limiting, TLS, and a safer logging policy.
+- **Intent routing:** classifies each prompt as generation, troubleshooting, or
+  clarification required.
+- **Specialist agents:** runs only the agent responsible for the selected
+  workflow.
+- **Tool calling:** lets specialists inspect schema types and validate candidate
+  operations through bounded, read-only functions.
+- **Schema-grounded retrieval:** retrieves compact GraphQL context on demand,
+  providing a RAG-style pattern without embeddings or a vector database.
+- **Prompt engineering:** uses separate system instructions for routing,
+  generation, and troubleshooting.
+- **Structured output:** converts model-produced JSON into typed Java records
+  before business processing.
+- **Guardrails:** validates prompt boundaries, tool inputs, GraphQL syntax,
+  schema compatibility, variable shapes, and final response contracts.
+- **Provider abstraction:** runs the same agent workflow with local Ollama or
+  hosted OpenAI inference.
+- **Observability:** correlates routing, inference, tools, latency, and outcomes
+  with a request ID while keeping full-content logging opt-in.
+- **AI evaluation:** combines deterministic transcript-based cases with
+  optional live-model quality and latency measurements.
+
+## How it works
+
+```text
+text/plain prompt
+       |
+       v
+request validation and correlation ID
+       |
+       v
+AI intent router
+  |         |                 |
+  |         |                 +--> clarification response
+  |         +--> troubleshooting specialist
+  +------------> generation specialist
+                    |
+                    v
+          bounded read-only tools
+          - inspectSchema
+          - validateOperation
+                    |
+                    v
+         structured specialist result
+                    |
+                    v
+      Java parsing and schema validation
+      variable coercion and AST formatting
+                    |
+                    v
+          normalized JSON response
+```
+
+The architecture combines probabilistic AI work with deterministic guardrails:
+
+1. A dedicated router classifies the prompt as `GENERATE`, `TROUBLESHOOT`, or
+   `CLARIFICATION_REQUIRED`.
+2. A confidence threshold sends uncertain requests to clarification instead of
+   choosing a specialist blindly.
+3. Only the selected specialist runs.
+4. The specialist retrieves compact schema context and validates candidate
+   operations through bounded, read-only tools.
+5. Tool inputs are validated, model/tool round trips are capped, and tools
+   cannot access the filesystem, shell, arbitrary network, secrets, or a
+   GraphQL execution endpoint.
+6. The model returns structured JSON, which is parsed into typed Java records.
+7. Java independently parses the GraphQL AST, requires exactly one named query
+   or mutation, validates it against the schema, rejects literal field
+   arguments, checks variable shapes, and canonically formats the operation.
+
+The router has no tools. Final formatting is performed by Java, not delegated
+to the specialist model. These boundaries reduce hallucination risk without
+treating model output as trusted.
 
 ## Documentation
 
@@ -180,7 +234,7 @@ never commit real API keys.
 | `OPENAI_API_KEY` | empty | Required when `ASSISTANT_AI_PROVIDER=openai` |
 | `ASSISTANT_AI_OPENAI_MODEL` | `gpt-5.4-mini` | OpenAI model identifier |
 | `ASSISTANT_SCHEMA_LOCATION` | `classpath:schema.graphql` | Spring resource location for GraphQL SDL |
-| `ASSISTANT_LOGGING_FULL_CONTENT_ENABLED` | `true` | Include complete AI workflow content in structured logs |
+| `ASSISTANT_LOGGING_FULL_CONTENT_ENABLED` | `false` | Opt in to complete AI workflow content in structured logs |
 
 Configuration is validated at startup. There is no automatic provider
 fallback, retry, or per-request model override.
@@ -193,7 +247,6 @@ Set the provider, key, and optional model:
 export ASSISTANT_AI_PROVIDER=openai
 export OPENAI_API_KEY=replace-with-your-openai-api-key
 export ASSISTANT_AI_OPENAI_MODEL=gpt-5.4-mini
-export ASSISTANT_LOGGING_FULL_CONTENT_ENABLED=false
 ./mvnw spring-boot:run
 ```
 
@@ -317,58 +370,6 @@ in the `X-Request-ID` response header:
 See [SPEC.md](SPEC.md) and the live OpenAPI document for the complete normative
 contract.
 
-## How it works
-
-```text
-text/plain prompt
-       |
-       v
-request validation and correlation ID
-       |
-       v
-AI intent router
-  |         |                 |
-  |         |                 +--> clarification response
-  |         +--> troubleshooting specialist
-  +------------> generation specialist
-                    |
-                    v
-          bounded read-only tools
-          - inspectSchema
-          - validateOperation
-                    |
-                    v
-         structured specialist result
-                    |
-                    v
-      Java parsing and schema validation
-      variable coercion and AST formatting
-                    |
-                    v
-          normalized JSON response
-```
-
-The architecture combines probabilistic AI work with deterministic guardrails:
-
-1. A dedicated router classifies the prompt as `GENERATE`, `TROUBLESHOOT`, or
-   `CLARIFICATION_REQUIRED`.
-2. A confidence threshold sends uncertain requests to clarification instead of
-   choosing a specialist blindly.
-3. Only the selected specialist runs.
-4. The specialist can retrieve compact schema context and validate candidate
-   operations through bounded, read-only tools.
-5. Tool inputs are validated, model/tool round trips are capped, and tools
-   cannot access the filesystem, shell, arbitrary network, secrets, or a
-   GraphQL execution endpoint.
-6. The model returns structured JSON, which is parsed into typed Java records.
-7. Java independently parses the GraphQL AST, requires exactly one named query
-   or mutation, validates it against the schema, rejects literal field
-   arguments, checks variable shapes, and canonically formats the operation.
-
-The router has no tools. Final formatting is performed by Java, not delegated
-to the specialist model. These boundaries reduce hallucination risk without
-treating model output as trusted.
-
 ## Security and privacy
 
 This project is designed for local development, not public deployment.
@@ -387,10 +388,11 @@ This project is designed for local development, not public deployment.
 - Ollama keeps inference local only when the configured Ollama endpoint is
   local and under your control.
 
-Before handling sensitive content:
+Full-content logging is disabled by default. Enable it only when the complete
+AI workflow is safe to retain:
 
 ```bash
-export ASSISTANT_LOGGING_FULL_CONTENT_ENABLED=false
+export ASSISTANT_LOGGING_FULL_CONTENT_ENABLED=true
 ```
 
 Authentication, authorization, TLS termination, rate limiting, production
@@ -546,12 +548,13 @@ State whether you want generation or troubleshooting. For troubleshooting,
 include the complete GraphQL operation. A `422` is an intentional clarification
 response, not an internal failure.
 
-### Sensitive content appears in logs
+### Enable full-content debugging logs
 
-Stop the application, remove or secure existing logs, and restart with:
+Opt in only when schemas, prompts, operations, variables, model responses, and
+tool payloads are safe to retain:
 
 ```bash
-export ASSISTANT_LOGGING_FULL_CONTENT_ENABLED=false
+export ASSISTANT_LOGGING_FULL_CONTENT_ENABLED=true
 ```
 
 ### A request failed with an ID

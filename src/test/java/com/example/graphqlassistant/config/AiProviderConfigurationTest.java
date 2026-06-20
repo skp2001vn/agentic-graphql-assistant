@@ -33,6 +33,7 @@ class AiProviderConfigurationTest {
           assertThat(provider.supportedCapabilities()).isEmpty();
           assertThat(properties.getAi().getOllama().getBaseUrl())
               .isEqualTo("http://localhost:11434");
+          assertThat(properties.getLogging().isFullContentEnabled()).isFalse();
         });
   }
 
