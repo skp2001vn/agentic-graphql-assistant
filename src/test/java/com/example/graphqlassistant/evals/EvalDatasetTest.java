@@ -32,5 +32,19 @@ class EvalDatasetTest {
         .containsExactly(
             "generate the query to get the list of country",
             "generate the query to get the country by code");
+    assertThat(cases)
+        .extracting(EvalCase::id)
+        .contains(
+            "regression-valid-multiline-query",
+            "regression-multiline-invalid-fields",
+            "regression-one-line-argument-syntax");
+    assertThat(EvalDataset.loadLive())
+        .extracting(EvalCase::id)
+        .contains(
+            "live-regression-generation-list",
+            "live-regression-generation-country-by-code",
+            "live-regression-valid-multiline-query",
+            "live-regression-multiline-invalid-fields",
+            "live-regression-one-line-argument-syntax");
   }
 }

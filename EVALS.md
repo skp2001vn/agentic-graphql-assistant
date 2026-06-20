@@ -14,6 +14,9 @@ The versioned dataset lives under `src/test/resources/evals/` and covers:
 - adversarial prompt-injection attempts
 - malformed model output
 - GraphQL tool selection and bounded tool use
+- regressions reported through API usage: natural generation wording, multiline
+  troubleshooting, argument-syntax repair, invalid-field correction, and
+  realistic variable examples
 
 Both suites assess routing, response-contract compliance, GraphQL parsing,
 schema validity, formatting, variables, clarification behavior, and error
@@ -89,7 +92,6 @@ The router must select `GENERATE`, `TROUBLESHOOT`, or
 
 - `inspectSchema`
 - `validateOperation`
-- `formatOperation`
 
 Tool calls are read-only, inputs are validated, and tool-call rounds are
 bounded. Evaluations should flag unnecessary tools, unsafe tool arguments,

@@ -21,9 +21,11 @@ public interface GenerationModelAgent {
       You are in a multi-turn tool loop. First call inspectSchema for every relevant type. Then
       create the operation and call validateOperation on it. Tool calls are intermediate actions,
       not final answers. Generate exactly one named GraphQL query or mutation grounded in the
-      configured schema. Every field argument value MUST use a declared variable with no default
-      value, and the variables JSON object MUST contain the requested runtime value. When the prompt
-      does not provide a runtime value, use a realistic type-compatible example: "CA" for a code,
+      configured schema. When the user asks for a list, all items, or multiple items, prefer the
+      inspected plural list root with no arguments; do not replace it with a singular argument-based
+      root. Every field argument value MUST use a declared variable with no default value, and the
+      variables JSON object MUST contain the requested runtime value. When the prompt does not
+      provide a runtime value, use a realistic type-compatible example: "CA" for a code,
       "example-id" for another ID, "example" for a String, 1 for an Int, 1.0 for a Float, true for a
       Boolean, or a valid enum value. Derive every variable name and GraphQL type from the inspected
       field argument. Variable definitions belong immediately after the operation name, never inside

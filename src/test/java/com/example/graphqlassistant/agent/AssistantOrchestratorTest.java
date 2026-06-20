@@ -237,9 +237,11 @@ class AssistantOrchestratorTest {
     assertThat(request.get().toolSpecifications())
         .extracting(specification -> specification.name())
         .containsExactlyInAnyOrder("inspectSchema", "validateOperation");
-    assertThat(request.get().messages().toString()).contains("multi-turn tool loop");
-    assertThat(request.get().messages().toString()).contains("MUST use a declared variable");
-    assertThat(request.get().messages().toString())
+    String instructions = request.get().messages().toString().replaceAll("\\s+", " ");
+    assertThat(instructions).contains("multi-turn tool loop");
+    assertThat(instructions).contains("MUST use a declared variable");
+    assertThat(instructions).contains("prefer the inspected plural list root with no arguments");
+    assertThat(instructions)
         .doesNotContain("You must answer strictly in the following JSON format");
   }
 
@@ -324,7 +326,9 @@ class AssistantOrchestratorTest {
     String instructions = request.get().messages().toString().replaceAll("\\s+", " ");
     assertThat(instructions)
         .contains("\"variables\":{\"<variableName>\":\"<exampleValue>\"}")
-        .contains("\"CA\" for a code");
+        .contains("\"CA\" for a code")
+        .contains("use exactly \"CA\"")
+        .contains("never use \"example-id\" for a code variable");
   }
 
   @Test
