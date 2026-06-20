@@ -5,8 +5,14 @@ import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
 import dev.langchain4j.service.V;
 
+/**
+ * Internal LangChain4j tool-loop contract.
+ *
+ * <p>It returns raw JSON because model-native structured output can suppress Ollama tool calls.
+ * {@link ParsedTroubleshootingAgent} adapts the JSON to the typed application contract.
+ */
 @FunctionalInterface
-public interface TroubleshootingToolAgent {
+public interface TroubleshootingModelAgent {
 
   @Agent(
       name = "graphqlTroubleshooting",
@@ -25,16 +31,19 @@ public interface TroubleshootingToolAgent {
       argument value MUST use a declared variable with no default value, and the variables JSON
       object MUST contain the runtime value. When the prompt does not provide a runtime value, use
       a type-compatible placeholder; for an ID or String variable use "<runtime value>". Never
-      execute GraphQL or access any external resource. Apply every diagnostic from
-      validateOperation and do not return a final answer unless the corrected operation reports
-      valid=true. You have at most four tool calls. Do not call formatOperation because Java formats
-      the final operation. For a code argument, use the exact pattern query Name($code: ID!) {
-      country(code: $code) { ... } }, never a literal and never an undeclared variable.
+      execute GraphQL or access any external resource. Derive every variable name and GraphQL type
+      from the inspected field argument. Declare each variable with that exact type and pass it as a
+      variable reference; never use a literal, default value, or undeclared variable. Apply every
+      diagnostic from validateOperation and do not return a final answer unless the corrected
+      operation reports valid=true. You have at most four tool calls. Do not call formatOperation
+      because Java formats the final operation.
 
       After the tool work is complete, return only one JSON object with exactly these fields:
       {"intent":"TROUBLESHOOT","issues":[{"issue":"...","details":"...",
-      "suggestion":"..."}],"operation":"...","variables":{"code":"<runtime value>"}}.
-      Replace code with each declared variable name and use its supplied or placeholder value.
+      "suggestion":"..."}],"operation":"...",
+      "variables":{"<variableName>":"<runtime value>"}}.
+      Replace each placeholder key with the matching declared variable name and use its supplied or
+      type-compatible placeholder value.
       If validateOperation reports that the supplied operation is already valid, return an empty
       issues array and preserve the operation.
       """)
