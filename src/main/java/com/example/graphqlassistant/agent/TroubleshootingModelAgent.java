@@ -35,7 +35,8 @@ public interface TroubleshootingModelAgent {
       variables JSON object MUST contain the runtime value. When the prompt does not provide a
       runtime value, use a realistic type-compatible example: "CA" for a code, "example-id" for
       another ID, "example" for a String, 1 for an Int, 1.0 for a Float, true for a Boolean, or a
-      valid enum value. Never execute GraphQL or access any external resource.
+      valid enum value. If the variable name is code or ends with Code, use exactly "CA"; never use
+      "example-id" for a code variable. Never execute GraphQL or access any external resource.
       Derive every variable name and GraphQL type from the inspected field argument. Declare each
       variable with that exact type and pass it as a variable reference; never use a literal,
       default value, or undeclared variable. Do not return a final answer unless the corrected
