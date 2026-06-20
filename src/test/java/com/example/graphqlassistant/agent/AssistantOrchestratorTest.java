@@ -236,7 +236,7 @@ class AssistantOrchestratorTest {
     assertThat(result.operation()).isEqualTo("query Greeting { greeting }");
     assertThat(request.get().toolSpecifications())
         .extracting(specification -> specification.name())
-        .containsExactlyInAnyOrder("inspectSchema", "validateOperation", "formatOperation");
+        .containsExactlyInAnyOrder("inspectSchema", "validateOperation");
     assertThat(request.get().messages().toString()).contains("multi-turn tool loop");
     assertThat(request.get().messages().toString()).contains("MUST use a declared variable");
     assertThat(request.get().messages().toString())
@@ -383,6 +383,31 @@ class AssistantOrchestratorTest {
     assertThat(instructions)
         .contains("\"variables\":{\"<variableName>\":\"<exampleValue>\"}")
         .contains("\"CA\" for a code");
+  }
+
+  @Test
+  void directsGenerationToRepairArgumentVariablesInOneCorrection() {
+    AtomicReference<ChatRequest> request = new AtomicReference<>();
+    ChatModel model =
+        chatModel(
+            chatRequest -> {
+              request.set(chatRequest);
+              return response(generationResult("query Greeting { greeting }"));
+            });
+
+    LangChain4jAgentFactory.createGenerationAgent(model, tools)
+        .generate("Generate a query that accepts an argument");
+
+    String instructions = request.get().messages().toString().replaceAll("\\s+", " ");
+    assertThat(instructions)
+        .contains("Variable definitions belong immediately after the operation name")
+        .contains(
+            "query OperationName($variableName: ExactType) { fieldName(argumentName: $variableName)")
+        .contains("Never put a variable reference in quotes")
+        .contains("For InvalidSyntax, LiteralArgument, or UndefinedVariable")
+        .contains("repair the operation signature and field argument together")
+        .contains("For OperationNamePascalCase")
+        .contains("Never validate the same invalid correction twice");
   }
 
   @Test

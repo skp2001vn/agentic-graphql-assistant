@@ -8,11 +8,11 @@ import dev.langchain4j.agent.tool.Tool;
 import java.util.List;
 import java.util.Objects;
 
-final class TroubleshootingTools {
+final class SpecialistTools {
 
   private final GraphqlAssistantTools delegate;
 
-  TroubleshootingTools(GraphqlAssistantTools delegate) {
+  SpecialistTools(GraphqlAssistantTools delegate) {
     this.delegate = Objects.requireNonNull(delegate, "delegate");
   }
 

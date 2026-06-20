@@ -38,7 +38,7 @@ public final class LangChain4jAgentFactory {
         configureAgent(
                 AgenticServices.agentBuilder(GenerationModelAgent.class),
                 Objects.requireNonNull(chatModel, "chatModel"),
-                Objects.requireNonNull(tools, "tools"))
+                new SpecialistTools(Objects.requireNonNull(tools, "tools")))
             .outputKey("generationJson")
             .build();
     GenerationModelAgent workflow =
@@ -55,7 +55,7 @@ public final class LangChain4jAgentFactory {
         configureAgent(
                 AgenticServices.agentBuilder(TroubleshootingModelAgent.class),
                 Objects.requireNonNull(chatModel, "chatModel"),
-                new TroubleshootingTools(Objects.requireNonNull(tools, "tools")))
+                new SpecialistTools(Objects.requireNonNull(tools, "tools")))
             .outputKey("troubleshootingJson")
             .build();
     TroubleshootingModelAgent workflow =

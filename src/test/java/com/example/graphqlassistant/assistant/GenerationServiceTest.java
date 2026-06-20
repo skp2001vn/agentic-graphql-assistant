@@ -78,8 +78,7 @@ class GenerationServiceTest {
               };
             });
 
-    AssistantResponse response =
-        service.assist("Generate a query that lists country codes and names.");
+    AssistantResponse response = service.assist("generate the query to get the list of country");
 
     assertThat(response).isInstanceOf(GenerateResponse.class);
     GenerateResponse result = (GenerateResponse) response;
@@ -91,7 +90,7 @@ class GenerationServiceTest {
     assertThat(requests).hasSize(3);
     assertThat(requests.get(1).toolSpecifications())
         .extracting(specification -> specification.name())
-        .contains("inspectSchema", "validateOperation", "formatOperation");
+        .containsExactlyInAnyOrder("inspectSchema", "validateOperation");
     assertThat(requests.get(2).messages()).anyMatch(ToolExecutionResultMessage.class::isInstance);
   }
 
@@ -117,6 +116,45 @@ class GenerationServiceTest {
     GenerateResponse result = (GenerateResponse) service.assist("Generate a query for country CA.");
 
     assertThat(result.query().getFirst()).isEqualTo("query GetCountry($code: ID!) {");
+    assertThat(result.variables()).containsExactlyEntriesOf(Map.of("code", "CA"));
+  }
+
+  @Test
+  void repairsAnArgumentVariableForNaturalCountryByCodeWording() {
+    AssistantService service =
+        service(
+            sequentialResponses(
+                response(
+                    """
+                    {"intent":"GENERATE","reason":"New operation requested","confidence":0.95}
+                    """),
+                inspectCountrySchema(),
+                toolCall(
+                    "validate-literal",
+                    "validateOperation",
+                    """
+                    {"operation":"query GetCountryByCode { country(code: \\"$code\\") { code name } }"}
+                    """),
+                toolCall(
+                    "validate-repair",
+                    "validateOperation",
+                    """
+                    {"operation":"query GetCountryByCode($code: ID!) { country(code: $code) { code name } }"}
+                    """),
+                response(
+                    """
+                    {
+                      "intent":"GENERATE",
+                      "issues":[],
+                      "operation":"query GetCountryByCode($code: ID!) { country(code: $code) { code name } }",
+                      "variables":{"code":"CA"}
+                    }
+                    """)));
+
+    GenerateResponse result =
+        (GenerateResponse) service.assist("generate the query to get the country by code");
+
+    assertThat(result.query().getFirst()).isEqualTo("query GetCountryByCode($code: ID!) {");
     assertThat(result.variables()).containsExactlyEntriesOf(Map.of("code", "CA"));
   }
 
@@ -299,6 +337,14 @@ class GenerationServiceTest {
                     .name("inspectSchema")
                     .arguments("{\"typeNames\":[\"Country\"]}")
                     .build()))
+        .build();
+  }
+
+  private static ChatResponse toolCall(String id, String name, String arguments) {
+    return ChatResponse.builder()
+        .aiMessage(
+            AiMessage.from(
+                ToolExecutionRequest.builder().id(id).name(name).arguments(arguments).build()))
         .build();
   }
 
