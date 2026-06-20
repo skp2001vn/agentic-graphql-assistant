@@ -1,22 +1,55 @@
 # GraphQL Assistant
 
-GraphQL Assistant is a local, stateless Java API that generates sample GraphQL
-operations from natural-language prompts and troubleshoots pasted operations.
-It validates and formats operations against one configured GraphQL SDL schema,
-but it never executes them against a GraphQL server.
+GraphQL Assistant is a local, stateless Java API that turns natural-language
+requests into schema-valid GraphQL operations and diagnoses pasted operations.
+It uses a bounded AI agent workflow, grounds model output in one configured
+GraphQL SDL schema, and validates the final result again in Java.
+
+It never executes GraphQL operations, retains chat history, or modifies the
+configured schema.
+
+## At a glance
+
+- Java 21 and Spring Boot
+- LangChain4j agent routing and tool calling
+- Local Ollama inference by default
+- Optional OpenAI provider
+- GraphQL Java parsing, schema validation, variable coercion, and formatting
+- Stateless `text/plain` API
+- OpenAPI and Swagger UI
+- Deterministic offline evaluations and optional live Ollama evaluations
 
 > [!CAUTION]
-> Full-content logging is enabled by default. Application logs contain the
-> complete configured schema, prompts, pasted operations, variables, AI
-> responses, and tool inputs and outputs. These values may contain secrets or
-> private data. API keys and authorization headers are excluded, but you should
-> still disable full-content logging before using sensitive content:
-> `ASSISTANT_LOGGING_FULL_CONTENT_ENABLED=false`.
+> Full-content logging is enabled by default. Logs can contain the complete
+> schema, prompts, pasted operations, variables, model responses, and tool
+> inputs and outputs. Disable it before using sensitive content:
 >
-> OpenAI mode also sends prompts and schema-derived content to OpenAI. The
-> service has no authentication and binds to `127.0.0.1`; do not expose it to an
-> untrusted network without adding authentication, rate limiting, safer logging,
-> and transport security.
+> ```bash
+> export ASSISTANT_LOGGING_FULL_CONTENT_ENABLED=false
+> ```
+>
+> OpenAI mode sends prompts and schema-derived content to OpenAI. The service
+> has no authentication and intentionally binds to `127.0.0.1`. Do not expose
+> it to an untrusted network without authentication, authorization, rate
+> limiting, TLS, and a safer logging policy.
+
+## Documentation
+
+This README is the practical setup, usage, and contribution guide. The
+authoritative product requirements and boundaries live elsewhere:
+
+| Document | Purpose |
+| --- | --- |
+| [SPEC.md](SPEC.md) | Approved requirements, API contracts, architecture, security boundaries, and scope |
+| [EVALS.md](EVALS.md) | Evaluation datasets, commands, thresholds, reports, and failure analysis |
+| [READINESS.md](READINESS.md) | Recorded release verification, live measurements, known risks, and rollback |
+| [tasks/plan.md](tasks/plan.md) | Approved implementation plan and acceptance criteria |
+| [tasks/todo.md](tasks/todo.md) | Implementation task completion status |
+
+When documentation differs, `SPEC.md` is authoritative for product behavior.
+Update and approve the specification before implementing a scope or contract
+change. Editing documentation alone does not alter runtime behavior, but an
+incorrect specification can misdirect future implementation and review.
 
 ## Requirements
 
@@ -24,10 +57,10 @@ but it never executes them against a GraphQL server.
 - The included Maven Wrapper (`./mvnw`); a separate Maven installation is not
   required
 - One AI provider:
-  - Ollama running locally with `qwen3:8b` (default), or
+  - [Ollama](https://docs.ollama.com/quickstart) with `qwen3:8b` by default, or
   - an OpenAI API key
 
-Confirm Java before starting:
+Confirm the active JDK:
 
 ```bash
 java -version
@@ -37,17 +70,23 @@ The output must report Java 21.
 
 ## Quick start with Ollama
 
-Install and start [Ollama](https://docs.ollama.com/quickstart), then download the
-configured model:
+Clone the repository and enter the project directory:
+
+```bash
+git clone https://github.com/skp2001vn/graphql-assistant2.git
+cd graphql-assistant2
+```
+
+Install Ollama, then make the default model available:
 
 ```bash
 ollama pull qwen3:8b
 ollama ls
 ```
 
-The Ollama application normally starts its local service automatically. On a
-system where it does not, run `ollama serve` in a separate terminal. Its API
-must be reachable at `http://localhost:11434`.
+Ollama normally starts its local service automatically. If it does not, run
+`ollama serve` in a separate terminal. The default endpoint is
+`http://localhost:11434`.
 
 Start GraphQL Assistant from the repository root:
 
@@ -55,8 +94,8 @@ Start GraphQL Assistant from the repository root:
 ./mvnw spring-boot:run
 ```
 
-Startup loads and validates the schema but does not contact Ollama. In another
-terminal, check the application:
+Startup validates the configured GraphQL schema but does not contact the model.
+In another terminal, confirm readiness:
 
 ```bash
 curl http://localhost:8080/health
@@ -68,76 +107,7 @@ Expected response:
 {"status":"UP"}
 ```
 
-## Schema configuration
-
-The default schema is
-[`src/main/resources/schema.graphql`](src/main/resources/schema.graphql). Replace
-that file with the SDL schema the assistant should use before starting the
-application.
-
-To keep a schema outside the application resources, set a Spring resource
-location:
-
-```bash
-export ASSISTANT_SCHEMA_LOCATION=file:/absolute/path/to/schema.graphql
-./mvnw spring-boot:run
-```
-
-The service stops during startup if the configured resource is missing,
-unreadable, empty, or invalid SDL. It loads exactly one schema once at startup;
-restart after changing it.
-
-## Configuration
-
-Copy the example if you prefer environment variables in a local file:
-
-```bash
-cp .env.example .env
-```
-
-Spring Boot does not load `.env` files itself. Export the file before running:
-
-```bash
-set -a
-source .env
-set +a
-./mvnw spring-boot:run
-```
-
-`.env` is ignored by Git. `.env.example` contains only public defaults and a
-placeholder API key.
-
-Important settings:
-
-| Environment variable | Default | Purpose |
-| --- | --- | --- |
-| `ASSISTANT_AI_PROVIDER` | `ollama` | Select `ollama` or `openai` at startup |
-| `ASSISTANT_AI_OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama API base URL |
-| `ASSISTANT_AI_OLLAMA_MODEL` | `qwen3:8b` | Ollama model |
-| `OPENAI_API_KEY` | empty | Required when the provider is `openai` |
-| `ASSISTANT_AI_OPENAI_MODEL` | `gpt-5.4-mini` | OpenAI model |
-| `ASSISTANT_SCHEMA_LOCATION` | `classpath:schema.graphql` | SDL resource location |
-| `ASSISTANT_LOGGING_FULL_CONTENT_ENABLED` | `true` | Log complete request, model, schema, and tool content |
-
-### OpenAI
-
-Set the provider and a real key in your shell or untracked `.env`:
-
-```bash
-export ASSISTANT_AI_PROVIDER=openai
-export OPENAI_API_KEY=replace-with-your-openai-api-key
-export ASSISTANT_AI_OPENAI_MODEL=gpt-5.4-mini
-./mvnw spring-boot:run
-```
-
-The application fails at startup when OpenAI is selected without a nonblank
-key. It does not silently fall back to Ollama.
-
-## Use the API
-
-The API accepts a nonblank UTF-8 `text/plain` request body up to 100 KB.
-
-Generate an operation:
+Generate a GraphQL operation:
 
 ```bash
 curl -X POST http://localhost:8080/assistant \
@@ -162,7 +132,125 @@ Example response:
 }
 ```
 
-Troubleshoot an operation:
+## Configure the GraphQL schema
+
+The default schema is
+[`src/main/resources/schema.graphql`](src/main/resources/schema.graphql).
+Replace it with the SDL schema the assistant should use, or point to an
+external resource:
+
+```bash
+export ASSISTANT_SCHEMA_LOCATION=file:/absolute/path/to/schema.graphql
+./mvnw spring-boot:run
+```
+
+The application loads exactly one schema at startup. Restart after changing
+it. Startup fails when the resource is missing, unreadable, empty, or invalid
+SDL, which prevents the AI workflow from running without reliable schema
+grounding.
+
+Schema inspection is targeted rather than embedding-based: the specialist asks
+for relevant root operations and named types through a read-only tool. There is
+no vector store, schema upload endpoint, per-request schema selection, or
+multi-schema merge.
+
+## Configuration
+
+Spring Boot reads environment variables directly. If you prefer a local file,
+copy the example and export it before starting:
+
+```bash
+cp .env.example .env
+set -a
+source .env
+set +a
+./mvnw spring-boot:run
+```
+
+Spring Boot does not load `.env` automatically. The file is ignored by Git;
+never commit real API keys.
+
+| Environment variable | Default | Purpose |
+| --- | --- | --- |
+| `ASSISTANT_AI_PROVIDER` | `ollama` | Select `ollama` or `openai` at startup |
+| `ASSISTANT_AI_REQUEST_TIMEOUT` | `60s` | Hard end-to-end assistant workflow timeout |
+| `ASSISTANT_AI_WARM_RESPONSE_TARGET` | `30s` | Operational warm-response target |
+| `ASSISTANT_AI_OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama API base URL |
+| `ASSISTANT_AI_OLLAMA_MODEL` | `qwen3:8b` | Ollama model tag |
+| `OPENAI_API_KEY` | empty | Required when `ASSISTANT_AI_PROVIDER=openai` |
+| `ASSISTANT_AI_OPENAI_MODEL` | `gpt-5.4-mini` | OpenAI model identifier |
+| `ASSISTANT_SCHEMA_LOCATION` | `classpath:schema.graphql` | Spring resource location for GraphQL SDL |
+| `ASSISTANT_LOGGING_FULL_CONTENT_ENABLED` | `true` | Include complete AI workflow content in structured logs |
+
+Configuration is validated at startup. There is no automatic provider
+fallback, retry, or per-request model override.
+
+### Use OpenAI
+
+Set the provider, key, and optional model:
+
+```bash
+export ASSISTANT_AI_PROVIDER=openai
+export OPENAI_API_KEY=replace-with-your-openai-api-key
+export ASSISTANT_AI_OPENAI_MODEL=gpt-5.4-mini
+export ASSISTANT_LOGGING_FULL_CONTENT_ENABLED=false
+./mvnw spring-boot:run
+```
+
+The application fails at startup when OpenAI is selected without a nonblank
+key. It does not silently fall back to Ollama.
+
+### Run the packaged JAR
+
+Build and run the executable artifact:
+
+```bash
+./mvnw clean package
+java -jar target/graphql-assistant-0.0.1-SNAPSHOT.jar
+```
+
+The same environment variables apply to both Maven and packaged-JAR startup.
+
+## API
+
+The server binds to `127.0.0.1:8080` by default.
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `POST` | `/assistant` | Generate or troubleshoot one GraphQL operation |
+| `GET` | `/health` | Confirm startup and schema loading completed |
+| `GET` | `/v3/api-docs` | Retrieve the OpenAPI document |
+| `GET` | `/swagger-ui.html` | Open interactive API documentation |
+
+### Request contract
+
+`POST /assistant` accepts:
+
+- `Content-Type: text/plain; charset=UTF-8`
+- a nonblank natural-language prompt
+- a maximum body size of 100 KB
+
+Each request is independent. The API does not retain chat history or infer
+context from an earlier request.
+
+### Generate an operation
+
+```bash
+curl -X POST http://localhost:8080/assistant \
+  -H 'Content-Type: text/plain; charset=UTF-8' \
+  --data 'Generate a query for country CA with its code and name.'
+```
+
+The response uses the `GENERATE` intent and returns:
+
+- `query`: a named, schema-valid operation represented as lines
+- `variables`: runtime values keyed without the GraphQL `$` prefix
+
+When the prompt omits a required value, the assistant can return a realistic,
+type-compatible example such as `"CA"` for a code. The operation remains a
+sample: the service does not execute it.
+
+### Troubleshoot an operation
 
 ```bash
 curl -X POST http://localhost:8080/assistant \
@@ -193,13 +281,16 @@ Example response:
 }
 ```
 
-When a prompt does not provide a required variable value, the API returns a
-realistic type-compatible example such as `"CA"` for a country code rather than
-an implementation placeholder.
+The response uses the `TROUBLESHOOT` intent and returns:
 
-Ambiguous prompts return `422 CLARIFICATION_REQUIRED`. Provider, invalid model
-response, and bounded agent failures return structured `502` errors. All
-handled errors include a request ID:
+- `issues`: model-produced diagnoses and repair guidance
+- `correctedQuery`: the complete corrected operation after Java validation
+- `variables`: runtime values for declared GraphQL variables
+
+### Errors
+
+Handled errors use a stable JSON envelope and include the request ID returned
+in the `X-Request-ID` response header:
 
 ```json
 {
@@ -212,70 +303,268 @@ handled errors include a request ID:
 }
 ```
 
-## OpenAPI
+| Status | Code | Meaning |
+| ---: | --- | --- |
+| `400` | `INVALID_REQUEST` | Body is empty, malformed, unreadable, or not valid UTF-8 |
+| `413` | `REQUEST_TOO_LARGE` | Body exceeds 100 KB |
+| `415` | `UNSUPPORTED_MEDIA_TYPE` | Request is not UTF-8 `text/plain` |
+| `422` | `CLARIFICATION_REQUIRED` | Prompt is ambiguous or lacks enough context |
+| `500` | `INTERNAL_ERROR` | Unexpected application failure |
+| `502` | `AI_PROVIDER_ERROR` | Provider request or bounded workflow timed out |
+| `502` | `INVALID_AI_RESPONSE` | Model output violated the structured or GraphQL contract |
+| `502` | `AGENT_EXECUTION_ERROR` | Router, specialist, or bounded tool workflow failed safely |
 
-With the application running:
+See [SPEC.md](SPEC.md) and the live OpenAPI document for the complete normative
+contract.
 
-- OpenAPI JSON: <http://localhost:8080/v3/api-docs>
-- Swagger UI: <http://localhost:8080/swagger-ui.html>
+## How it works
 
-The contract documents the `text/plain` request, generation and
-troubleshooting responses, standard error responses, and examples.
+```text
+text/plain prompt
+       |
+       v
+request validation and correlation ID
+       |
+       v
+AI intent router
+  |         |                 |
+  |         |                 +--> clarification response
+  |         +--> troubleshooting specialist
+  +------------> generation specialist
+                    |
+                    v
+          bounded read-only tools
+          - inspectSchema
+          - validateOperation
+                    |
+                    v
+         structured specialist result
+                    |
+                    v
+      Java parsing and schema validation
+      variable coercion and AST formatting
+                    |
+                    v
+          normalized JSON response
+```
 
-## How the agent works
+The architecture combines probabilistic AI work with deterministic guardrails:
 
-Each request is independent:
+1. A dedicated router classifies the prompt as `GENERATE`, `TROUBLESHOOT`, or
+   `CLARIFICATION_REQUIRED`.
+2. A confidence threshold sends uncertain requests to clarification instead of
+   choosing a specialist blindly.
+3. Only the selected specialist runs.
+4. The specialist can retrieve compact schema context and validate candidate
+   operations through bounded, read-only tools.
+5. Tool inputs are validated, model/tool round trips are capped, and tools
+   cannot access the filesystem, shell, arbitrary network, secrets, or a
+   GraphQL execution endpoint.
+6. The model returns structured JSON, which is parsed into typed Java records.
+7. Java independently parses the GraphQL AST, requires exactly one named query
+   or mutation, validates it against the schema, rejects literal field
+   arguments, checks variable shapes, and canonically formats the operation.
 
-1. A dedicated AI router classifies the prompt as generation,
-   troubleshooting, or clarification required.
-2. Only the selected generation or troubleshooting specialist runs.
-3. The specialist may call bounded, read-only GraphQL tools:
-   - `inspectSchema` returns relevant root operations, types, fields, arguments,
-     and input types.
-   - `validateOperation` parses and validates an operation against the
-     configured schema.
-   - `formatOperation` returns a canonical pretty-printed operation.
-4. Java validates the structured model result and independently parses,
-   schema-validates, and formats the final operation before returning it.
+The router has no tools. Final formatting is performed by Java, not delegated
+to the specialist model. These boundaries reduce hallucination risk without
+treating model output as trusted.
 
-The router has no tools, tool arguments are validated, tool-call rounds are
-bounded, no chat history is retained, and no generated operation is executed.
+## Security and privacy
 
-## Commands
+This project is designed for local development, not public deployment.
+
+- The prompt is untrusted and cannot override agent system instructions.
+- Generated operations are validated but never executed.
+- Model tools are read-only and bounded.
+- The application has no database or chat-history persistence. Structured logs
+  may retain request and schema content according to your logging configuration.
+- API keys are not written into OpenAPI examples or normal response payloads.
+- Configured provider credentials are redacted if they appear in logged
+  content.
+- Full-content logs can still contain other secrets embedded in prompts,
+  schemas, operations, variables, or model output.
+- OpenAI receives request and schema-derived content when selected.
+- Ollama keeps inference local only when the configured Ollama endpoint is
+  local and under your control.
+
+Before handling sensitive content:
+
+```bash
+export ASSISTANT_LOGGING_FULL_CONTENT_ENABLED=false
+```
+
+Authentication, authorization, TLS termination, rate limiting, production
+network hardening, persistence, and GraphQL execution are outside the approved
+scope. See [SPEC.md](SPEC.md) for the complete boundary.
+
+## Observability
+
+The application emits structured JSON logs for:
+
+- request start and completion
+- request ID, selected agent, status, latency, and error category
+- selected provider and model
+- router selection
+- model response completion
+- tool name, outcome, and duration
+- normalized response completion
+
+When full-content logging is enabled, the same events can include schema,
+prompt, raw model response, tool input/output, and final response content. Use
+the `X-Request-ID` header or error `requestId` to correlate a request across the
+workflow.
+
+## Development
+
+### Common commands
 
 | Command | Purpose |
 | --- | --- |
 | `./mvnw spring-boot:run` | Start the local API |
-| `./mvnw test` | Run the automated tests |
-| `./mvnw test -Dtest=OpenApiTest` | Verify OpenAPI and Swagger UI publication |
+| `./mvnw test` | Run the offline automated tests |
+| `./mvnw test -Pevals` | Run deterministic evaluation datasets |
+| `./mvnw test -Pevals-live` | Run live Ollama evaluations |
+| `./mvnw test -Pevals-live -Deval.case=<id>` | Run one live evaluation case |
 | `./mvnw checkstyle:check` | Run static style checks |
 | `./mvnw spotless:check` | Check Java formatting |
 | `./mvnw spotless:apply` | Apply Java formatting |
-| `./mvnw verify` | Run the complete offline verification gate |
-| `./mvnw clean package` | Build the application JAR |
+| `./mvnw javadoc:javadoc` | Generate API documentation |
+| `./mvnw verify` | Run the complete offline release gate |
+| `./mvnw clean package` | Run tests and build the executable JAR |
 
-Evaluation datasets, scoring, reports, and commands are documented in
-[EVALS.md](EVALS.md).
+Live evaluations require a reachable Ollama service and model. Normal tests and
+`./mvnw verify` do not require Ollama or OpenAI.
+
+### Project structure
+
+```text
+src/main/java/com/example/graphqlassistant/
+  agent/       routing, specialist prompts, orchestration, structured output
+  api/         HTTP endpoints, response contracts, request IDs, error mapping
+  assistant/   application service and response normalization
+  config/      Spring composition, provider selection, external properties
+  logging/     request-scoped AI workflow observability
+  provider/    provider-neutral LangChain4j model adapter
+  schema/      schema loading and deterministic operation processing
+  tools/       schema inspection, validation, diagnostics, formatting
+
+src/main/resources/
+  application.yml
+  schema.graphql
+
+src/test/
+  Java tests and deterministic/live evaluation datasets
+```
+
+### Evaluation workflow
+
+Use deterministic evaluations for every behavior, prompt, routing, or
+tool-contract change:
+
+```bash
+./mvnw test -Pevals
+```
+
+Use live Ollama evaluations when model quality or latency may have changed:
+
+```bash
+./mvnw test -Pevals-live
+```
+
+Reports are written under `target/evals/`. See [EVALS.md](EVALS.md) for dataset
+format, thresholds, focused debugging, and failure interpretation.
+
+### Changing behavior
+
+`SPEC.md` is the implementation foundation. A behavior change should follow
+this order:
+
+1. update the relevant requirement, API contract, boundary, or success
+   criterion in `SPEC.md`;
+2. obtain explicit approval for the specification change;
+3. update `tasks/plan.md` when implementation work or acceptance criteria
+   change;
+4. implement the smallest approved change;
+5. add or update tests and evaluations;
+6. run the applicable verification gates;
+7. update this README only where setup or usage changed.
+
+README improvements do not replace specification approval.
 
 ## Troubleshooting
 
-- **`java` reports another version:** set `JAVA_HOME` to a Java 21 JDK and
-  reopen the terminal.
-- **Startup says the schema is missing or invalid:** verify
-  `ASSISTANT_SCHEMA_LOCATION`, use a `file:/absolute/path` URI for an external
-  file, and validate the file as GraphQL SDL.
-- **Ollama requests return `502 AI_PROVIDER_ERROR`:** confirm `ollama ls`
-  includes `qwen3:8b`, start `ollama serve` if needed, and verify
-  `curl http://localhost:11434/api/tags`.
-- **OpenAI startup fails:** set both `ASSISTANT_AI_PROVIDER=openai` and a
-  nonblank `OPENAI_API_KEY`.
-- **The API returns `415`:** send `Content-Type: text/plain; charset=UTF-8`,
-  not JSON.
-- **The API returns `422`:** add the requested operation intent or paste the
-  GraphQL operation to troubleshoot; this is a clarification response, not a
-  server failure.
-- **Sensitive content appears in logs:** this is the documented default. Stop
-  the application, remove or secure existing logs, and restart with
-  `ASSISTANT_LOGGING_FULL_CONTENT_ENABLED=false`.
-- **A failure includes a request ID:** use that ID to correlate the request,
-  model, tool, and completion log entries.
+### Java reports another version
+
+Set `JAVA_HOME` to a Java 21 JDK and reopen the terminal:
+
+```bash
+java -version
+```
+
+### Schema startup failure
+
+Verify `ASSISTANT_SCHEMA_LOCATION`. For an external file, use a Spring file URI
+such as:
+
+```bash
+export ASSISTANT_SCHEMA_LOCATION=file:/absolute/path/to/schema.graphql
+```
+
+Confirm the file is readable, nonempty, and valid GraphQL SDL.
+
+### Ollama returns `502 AI_PROVIDER_ERROR`
+
+Check the model and local endpoint:
+
+```bash
+ollama ls
+curl http://localhost:11434/api/tags
+```
+
+Run `ollama serve` if the local service is not already running.
+
+### OpenAI startup fails
+
+Set both values before startup:
+
+```bash
+export ASSISTANT_AI_PROVIDER=openai
+export OPENAI_API_KEY=replace-with-your-openai-api-key
+```
+
+### API returns `415`
+
+Send a plain UTF-8 body, not JSON:
+
+```bash
+-H 'Content-Type: text/plain; charset=UTF-8'
+```
+
+### API returns `422`
+
+State whether you want generation or troubleshooting. For troubleshooting,
+include the complete GraphQL operation. A `422` is an intentional clarification
+response, not an internal failure.
+
+### Sensitive content appears in logs
+
+Stop the application, remove or secure existing logs, and restart with:
+
+```bash
+export ASSISTANT_LOGGING_FULL_CONTENT_ENABLED=false
+```
+
+### A request failed with an ID
+
+Search structured logs for the response `X-Request-ID` header or error
+`requestId`. The identifier correlates routing, inference, tools, normalization,
+status, latency, and error category.
+
+## Scope
+
+The initial release intentionally excludes operation execution, authentication,
+authorization, persistence, chat history, streaming, per-request schemas,
+multi-schema support, a web UI, Docker/cloud deployment, automatic provider
+fallback, and unbounded autonomous agents.
+
+For the authoritative and complete scope, see [SPEC.md](SPEC.md).
