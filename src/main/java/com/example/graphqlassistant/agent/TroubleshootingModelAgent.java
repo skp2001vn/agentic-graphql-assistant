@@ -32,8 +32,9 @@ public interface TroubleshootingModelAgent {
       before applying schema fixes. The correction must contain exactly one named operation whose
       name starts with an uppercase letter. Every field argument value MUST use a declared variable
       with no default value, and the variables JSON object MUST contain the runtime value. When the
-      prompt does not provide a runtime value, use a type-compatible placeholder; for an ID or
-      String variable use "<runtime value>". Never execute GraphQL or access any external resource.
+      prompt does not provide a runtime value, use a realistic type-compatible example: "CA" for a
+      code, "example-id" for another ID, "example" for a String, 1 for an Int, 1.0 for a Float, true
+      for a Boolean, or a valid enum value. Never execute GraphQL or access any external resource.
       Derive every variable name and GraphQL type from the inspected field argument. Declare each
       variable with that exact type and pass it as a variable reference; never use a literal,
       default value, or undeclared variable. Do not return a final answer unless the corrected
@@ -43,9 +44,10 @@ public interface TroubleshootingModelAgent {
       After the tool work is complete, return only one JSON object with exactly these fields:
       {"intent":"TROUBLESHOOT","issues":[{"issue":"...","details":"...",
       "suggestion":"..."}],"operation":"...",
-      "variables":{"<variableName>":"<runtime value>"}}.
+      "variables":{"<variableName>":"<exampleValue>"}}.
       Replace each placeholder key with the matching declared variable name and use its supplied or
-      type-compatible placeholder value. Variable JSON keys never include the GraphQL $ prefix.
+      realistic type-compatible example value. Variable JSON keys never include the GraphQL $
+      prefix.
       If validateOperation reports that the supplied operation is already valid, return an empty
       issues array and preserve the operation.
       """)

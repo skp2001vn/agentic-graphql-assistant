@@ -282,6 +282,8 @@ operation as an array of formatted lines.
 - Query and mutation operations are supported according to the configured
   schema.
 - Argument values use variables when practical.
+- Missing runtime values are represented by realistic type-compatible examples,
+  not implementation placeholders.
 - Returned operations parse, validate against the loaded schema, and are
   consistently pretty-printed as arrays containing one line per element.
 - Invalid, incomplete, contradictory, or non-schema-valid model output returns

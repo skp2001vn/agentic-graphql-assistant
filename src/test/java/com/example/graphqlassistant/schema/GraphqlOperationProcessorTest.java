@@ -20,6 +20,13 @@ class GraphqlOperationProcessorTest {
         type Query {
           countries: [Country!]!
           country(code: ID!): Country
+          example(
+            code: ID!
+            term: String!
+            limit: Int!
+            ratio: Float!
+            active: Boolean!
+          ): Country
         }
 
         type Mutation {
@@ -66,6 +73,41 @@ class GraphqlOperationProcessorTest {
 
     assertThat(query).startsWith("query GetCountry($code: ID!)");
     assertThat(mutation).startsWith("mutation RenameCountry($code: ID!, $name: String!)");
+  }
+
+  @Test
+  void replacesUnresolvedValuesWithTypeCompatibleExamples() {
+    var result =
+        processor.processWithVariables(
+            """
+            query Example(
+              $code: ID!
+              $term: String!
+              $limit: Int!
+              $ratio: Float!
+              $active: Boolean!
+            ) {
+              example(
+                code: $code
+                term: $term
+                limit: $limit
+                ratio: $ratio
+                active: $active
+              ) {
+                name
+              }
+            }
+            """,
+            Map.of(
+                "code", "<runtime value>",
+                "term", "<runtime value>",
+                "limit", "<runtime value>",
+                "ratio", "<runtime value>",
+                "active", "<runtime value>"));
+
+    assertThat(result.variables())
+        .containsExactlyInAnyOrderEntriesOf(
+            Map.of("code", "CA", "term", "example", "limit", 1, "ratio", 1.0, "active", true));
   }
 
   @Test

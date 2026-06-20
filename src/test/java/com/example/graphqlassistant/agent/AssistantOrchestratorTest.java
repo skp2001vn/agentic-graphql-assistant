@@ -267,7 +267,7 @@ class AssistantOrchestratorTest {
   }
 
   @Test
-  void requiresTroubleshootingPlaceholdersForMissingRuntimeValues() {
+  void requiresTroubleshootingExamplesForMissingRuntimeValues() {
     AtomicReference<ChatRequest> request = new AtomicReference<>();
     ChatModel model =
         chatModel(
@@ -291,8 +291,10 @@ class AssistantOrchestratorTest {
     LangChain4jAgentFactory.createTroubleshootingAgent(model, tools)
         .troubleshoot("Troubleshoot a query");
 
-    assertThat(request.get().messages().toString())
-        .contains("\"variables\":{\"<variableName>\":\"<runtime value>\"}");
+    String instructions = request.get().messages().toString().replaceAll("\\s+", " ");
+    assertThat(instructions)
+        .contains("\"variables\":{\"<variableName>\":\"<exampleValue>\"}")
+        .contains("\"CA\" for a code");
   }
 
   @Test
@@ -331,7 +333,7 @@ class AssistantOrchestratorTest {
   }
 
   @Test
-  void requiresGenerationPlaceholdersForMissingRuntimeValues() {
+  void requiresGenerationExamplesForMissingRuntimeValues() {
     AtomicReference<ChatRequest> request = new AtomicReference<>();
     ChatModel model =
         chatModel(
@@ -345,8 +347,10 @@ class AssistantOrchestratorTest {
     LangChain4jAgentFactory.createGenerationAgent(model, tools)
         .generate("Generate a query to get a country based on code");
 
-    assertThat(request.get().messages().toString())
-        .contains("\"variables\":{\"<variableName>\":\"<runtime value>\"}");
+    String instructions = request.get().messages().toString().replaceAll("\\s+", " ");
+    assertThat(instructions)
+        .contains("\"variables\":{\"<variableName>\":\"<exampleValue>\"}")
+        .contains("\"CA\" for a code");
   }
 
   @Test

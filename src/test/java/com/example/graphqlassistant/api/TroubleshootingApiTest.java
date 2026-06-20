@@ -80,7 +80,7 @@ class TroubleshootingApiTest {
                   }
                 }
                 """,
-                Map.of("code", "<runtime value>")));
+                Map.of("code", "CA")));
 
     mockMvc
         .perform(
@@ -93,7 +93,7 @@ class TroubleshootingApiTest {
         .andExpect(jsonPath("$.issues").isEmpty())
         .andExpect(jsonPath("$.correctedQuery").isArray())
         .andExpect(jsonPath("$.correctedQuery[0]").value("query CountryQuery($code: ID!) {"))
-        .andExpect(jsonPath("$.variables.code").value("<runtime value>"));
+        .andExpect(jsonPath("$.variables.code").value("CA"));
   }
 
   @Test

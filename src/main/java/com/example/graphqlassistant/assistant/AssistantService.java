@@ -16,6 +16,7 @@ import com.example.graphqlassistant.logging.AssistantRequestLogger;
 import com.example.graphqlassistant.provider.AiProviderException;
 import com.example.graphqlassistant.provider.AssistantAiProvider;
 import com.example.graphqlassistant.schema.GraphqlOperationProcessor;
+import com.example.graphqlassistant.schema.GraphqlOperationProcessor.ProcessedOperation;
 import com.example.graphqlassistant.schema.GraphqlSchemaContext;
 import dev.langchain4j.service.output.OutputParsingException;
 import java.util.List;
@@ -90,27 +91,29 @@ public final class AssistantService {
       throw invalidResponse();
     }
 
-    String operation = operationProcessor.process(result.operation(), result.variables());
+    ProcessedOperation processed =
+        operationProcessor.processWithVariables(result.operation(), result.variables());
     AssistantResponse response =
         switch (result.intent()) {
-          case GENERATE -> generateResponse(result, operation);
-          case TROUBLESHOOT -> troubleshootResponse(result, operation);
+          case GENERATE -> generateResponse(result, processed);
+          case TROUBLESHOOT -> troubleshootResponse(result, processed);
           case CLARIFICATION_REQUIRED -> throw invalidResponse();
         };
     requestLogger.normalizedResponse(response);
     return response;
   }
 
-  private GenerateResponse generateResponse(SpecialistResult result, String operation) {
+  private GenerateResponse generateResponse(SpecialistResult result, ProcessedOperation processed) {
     if (!result.issues().isEmpty()) {
       throw invalidResponse();
     }
-    return new GenerateResponse(operation, result.variables());
+    return new GenerateResponse(processed.operation(), processed.variables());
   }
 
-  private TroubleshootResponse troubleshootResponse(SpecialistResult result, String operation) {
+  private TroubleshootResponse troubleshootResponse(
+      SpecialistResult result, ProcessedOperation processed) {
     List<TroubleshootingIssue> issues = result.issues().stream().map(this::toApiIssue).toList();
-    return new TroubleshootResponse(issues, operation, result.variables());
+    return new TroubleshootResponse(issues, processed.operation(), processed.variables());
   }
 
   private TroubleshootingIssue toApiIssue(SpecialistIssue issue) {
