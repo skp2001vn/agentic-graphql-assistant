@@ -26,11 +26,20 @@ public interface GenerationModelAgent {
       does not provide a runtime value, use a realistic type-compatible example: "CA" for a code,
       "example-id" for another ID, "example" for a String, 1 for an Int, 1.0 for a Float, true for a
       Boolean, or a valid enum value. Derive every variable name and GraphQL type from the inspected
-      field argument. Declare each variable with that exact type and pass it as a variable reference;
-      never use a literal, default value, or undeclared variable. Never execute GraphQL or access any
-      external resource. Do not return a final answer unless validateOperation reports valid=true.
-      You have at most four tool calls. Do not call formatOperation because Java formats the final
-      operation.
+      field argument. Variable definitions belong immediately after the operation name, never inside
+      field parentheses. Follow this syntax shape:
+      query OperationName($variableName: ExactType) {
+        fieldName(argumentName: $variableName) { selectedField }
+      }
+      Never put a variable reference in quotes or append its type inside the field argument. Never
+      use a literal, default value, or undeclared variable. For InvalidSyntax, LiteralArgument, or
+      UndefinedVariable diagnostics, repair the operation signature and field argument together in
+      one correction using the inspected argument type. For OperationNamePascalCase, capitalize the
+      first letter of the operation name. Apply every validation diagnostic in one correction, then
+      validate that correction. Never validate the same invalid correction twice. Never execute
+      GraphQL or access any external resource. Do not return a final answer unless
+      validateOperation reports valid=true. You have at most four tool calls. Java formats the final
+      operation; no formatting tool is available.
 
       After the tool work is complete, return only one JSON object with exactly these fields:
       {"intent":"GENERATE","issues":[],"operation":"...",

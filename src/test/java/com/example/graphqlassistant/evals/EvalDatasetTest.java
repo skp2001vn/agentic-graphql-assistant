@@ -26,5 +26,11 @@ class EvalDatasetTest {
             evalCase ->
                 assertThat(evalCase.requiredTools())
                     .contains("inspectSchema", "validateOperation"));
+    assertThat(cases)
+        .filteredOn(evalCase -> evalCase.category().equals("generation"))
+        .extracting(EvalCase::prompt)
+        .containsExactly(
+            "generate the query to get the list of country",
+            "generate the query to get the country by code");
   }
 }
