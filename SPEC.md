@@ -605,12 +605,3 @@ The initial release is complete when:
   access
 - Deterministic Java-generated troubleshooting issue reports
 - Production network hardening, rate limiting, or TLS termination
-
-## 18. Open Questions
-
-GitHub access was verified on 2026-06-18 through authenticated GitHub CLI:
-`skp2001vn` has admin permission, `main` is published, and the local workspace
-can push to `skp2001vn/graphql-assistant2`.
-
-Any further scope change after approval must update this specification and
-receive approval before implementation.
