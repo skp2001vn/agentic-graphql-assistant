@@ -4,11 +4,12 @@ import dev.langchain4j.agentic.Agent;
 import dev.langchain4j.service.V;
 import java.util.Objects;
 
+/** Adapts the raw model/tool-loop response to the typed generation contract. */
 public final class ParsedGenerationAgent implements GenerationAgent {
 
-  private final GenerationToolAgent delegate;
+  private final GenerationModelAgent delegate;
 
-  public ParsedGenerationAgent(GenerationToolAgent delegate) {
+  public ParsedGenerationAgent(GenerationModelAgent delegate) {
     this.delegate = Objects.requireNonNull(delegate, "delegate");
   }
 

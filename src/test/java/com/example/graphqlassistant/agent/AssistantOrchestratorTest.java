@@ -230,6 +230,29 @@ class AssistantOrchestratorTest {
   }
 
   @Test
+  void keepsSpecialistInstructionsIndependentOfTheConfiguredSchema() {
+    List<ChatRequest> requests = new ArrayList<>();
+    ChatModel model =
+        chatModel(
+            chatRequest -> {
+              requests.add(chatRequest);
+              return response(generationResult("query Greeting { greeting }"));
+            });
+
+    LangChain4jAgentFactory.createGenerationAgent(model, tools)
+        .generate("Generate a greeting query");
+    LangChain4jAgentFactory.createTroubleshootingAgent(model, tools)
+        .troubleshoot("Troubleshoot query Greeting { greeting }");
+
+    assertThat(requests)
+        .extracting(request -> request.messages().toString())
+        .allSatisfy(
+            instructions ->
+                assertThat(instructions)
+                    .doesNotContain("country(", "$code", "ID!", "\"code\":\"<runtime value>\""));
+  }
+
+  @Test
   void requiresTroubleshootingPlaceholdersForMissingRuntimeValues() {
     AtomicReference<ChatRequest> request = new AtomicReference<>();
     ChatModel model =
@@ -255,7 +278,7 @@ class AssistantOrchestratorTest {
         .troubleshoot("Troubleshoot a query");
 
     assertThat(request.get().messages().toString())
-        .contains("\"variables\":{\"code\":\"<runtime value>\"}");
+        .contains("\"variables\":{\"<variableName>\":\"<runtime value>\"}");
   }
 
   @Test
@@ -274,7 +297,7 @@ class AssistantOrchestratorTest {
         .generate("Generate a query to get a country based on code");
 
     assertThat(request.get().messages().toString())
-        .contains("\"variables\":{\"code\":\"<runtime value>\"}");
+        .contains("\"variables\":{\"<variableName>\":\"<runtime value>\"}");
   }
 
   @Test

@@ -34,15 +34,15 @@ public final class LangChain4jAgentFactory {
 
   public static GenerationAgent createGenerationAgent(
       ChatModel chatModel, GraphqlAssistantTools tools) {
-    GenerationToolAgent specialist =
+    GenerationModelAgent specialist =
         configureAgent(
-                AgenticServices.agentBuilder(GenerationToolAgent.class),
+                AgenticServices.agentBuilder(GenerationModelAgent.class),
                 Objects.requireNonNull(chatModel, "chatModel"),
                 Objects.requireNonNull(tools, "tools"))
             .outputKey("generationJson")
             .build();
-    GenerationToolAgent workflow =
-        AgenticServices.sequenceBuilder(GenerationToolAgent.class)
+    GenerationModelAgent workflow =
+        AgenticServices.sequenceBuilder(GenerationModelAgent.class)
             .subAgents(specialist)
             .outputKey("generationJson")
             .build();
@@ -51,15 +51,15 @@ public final class LangChain4jAgentFactory {
 
   public static TroubleshootingAgent createTroubleshootingAgent(
       ChatModel chatModel, GraphqlAssistantTools tools) {
-    TroubleshootingToolAgent specialist =
+    TroubleshootingModelAgent specialist =
         configureAgent(
-                AgenticServices.agentBuilder(TroubleshootingToolAgent.class),
+                AgenticServices.agentBuilder(TroubleshootingModelAgent.class),
                 Objects.requireNonNull(chatModel, "chatModel"),
                 Objects.requireNonNull(tools, "tools"))
             .outputKey("troubleshootingJson")
             .build();
-    TroubleshootingToolAgent workflow =
-        AgenticServices.sequenceBuilder(TroubleshootingToolAgent.class)
+    TroubleshootingModelAgent workflow =
+        AgenticServices.sequenceBuilder(TroubleshootingModelAgent.class)
             .subAgents(specialist)
             .outputKey("troubleshootingJson")
             .build();
