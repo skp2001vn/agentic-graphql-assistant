@@ -15,6 +15,13 @@ import com.example.graphqlassistant.tools.GraphqlAssistantTools;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Composes the assistant's router, specialist agents, deterministic tools, and application service.
+ *
+ * <p>The bean graph forms a bounded multi-agent architecture: intent classification precedes a
+ * conditional specialist workflow, tools ground the LLM in the configured schema, and a
+ * deterministic processor validates all model output before publication.
+ */
 @Configuration(proxyBeanMethods = false)
 public class AgentConfiguration {
 

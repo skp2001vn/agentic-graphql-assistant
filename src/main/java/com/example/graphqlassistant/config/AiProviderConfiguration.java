@@ -13,6 +13,13 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Selects and configures the runtime large language model provider.
+ *
+ * <p>Both local Ollama inference and OpenAI inference are exposed behind the same provider-neutral
+ * chat-model contract. Deterministic temperature, disabled retries, bounded timeouts, and
+ * centralized logging reduce nondeterminism and keep latency and data handling explicit.
+ */
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(AssistantProperties.class)
 public class AiProviderConfiguration {

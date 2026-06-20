@@ -31,6 +31,14 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Deterministically validates and canonicalizes GraphQL operations returned by AI specialists.
+ *
+ * <p>This processor is a post-generation guardrail. It parses the operation into an abstract syntax
+ * tree (AST), enforces the assistant's one-operation contract, validates against the configured
+ * schema, requires variable-based arguments, synthesizes safe example values when requested, and
+ * applies GraphQL variable coercion. No generated operation is executed.
+ */
 public final class GraphqlOperationProcessor {
 
   private static final String INVALID_OPERATION = "The AI returned an invalid GraphQL operation";
@@ -39,16 +47,37 @@ public final class GraphqlOperationProcessor {
 
   private final GraphQLSchema schema;
 
+  /**
+   * Builds an executable validation schema from the configured SDL registry.
+   *
+   * @param schemaContext loaded schema text and parsed type registry
+   */
   public GraphqlOperationProcessor(GraphqlSchemaContext schemaContext) {
     Objects.requireNonNull(schemaContext, "schemaContext");
     schema =
         UnExecutableSchemaGenerator.makeUnExecutableSchema(schemaContext.typeDefinitionRegistry());
   }
 
+  /**
+   * Validates and canonically formats a model-produced GraphQL operation.
+   *
+   * @param operation generated or corrected GraphQL document
+   * @param variables model-produced runtime variable values
+   * @return canonical GraphQL text
+   * @throws InvalidAgentResponseException when the operation or variables violate the contract
+   */
   public String process(String operation, Map<String, Object> variables) {
     return processWithVariables(operation, variables).operation();
   }
 
+  /**
+   * Validates, formats, and resolves example variables for a model-produced operation.
+   *
+   * @param operation generated or corrected GraphQL document
+   * @param variables model-produced runtime variable values
+   * @return immutable canonical operation and coerced variable values
+   * @throws InvalidAgentResponseException when parsing, schema validation, or coercion fails
+   */
   public ProcessedOperation processWithVariables(String operation, Map<String, Object> variables) {
     if (operation == null || operation.isBlank() || variables == null) {
       throw invalidOperation();
@@ -235,8 +264,15 @@ public final class GraphqlOperationProcessor {
     return new InvalidAgentResponseException(INVALID_OPERATION);
   }
 
+  /**
+   * Immutable GraphQL operation after deterministic post-processing of AI output.
+   *
+   * @param operation canonical schema-valid GraphQL operation
+   * @param variables immutable coerced runtime variable values
+   */
   public record ProcessedOperation(String operation, Map<String, Object> variables) {
 
+    /** Copies variable values into an insertion-ordered immutable map. */
     public ProcessedOperation {
       variables = Collections.unmodifiableMap(new LinkedHashMap<>(variables));
     }

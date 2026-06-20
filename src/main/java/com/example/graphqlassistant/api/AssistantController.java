@@ -31,6 +31,12 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Exposes the natural-language GraphQL assistant through a single bounded HTTP endpoint.
+ *
+ * <p>The controller treats prompts as untrusted input, enforces UTF-8 and payload-size boundaries,
+ * and delegates all AI routing, tool use, and schema grounding to the application service.
+ */
 @RestController
 public class AssistantController {
 
@@ -38,10 +44,21 @@ public class AssistantController {
 
   private final AssistantService assistantService;
 
+  /**
+   * Creates the HTTP adapter for the assistant use case.
+   *
+   * @param assistantService application service that owns AI orchestration and normalization
+   */
   public AssistantController(AssistantService assistantService) {
     this.assistantService = assistantService;
   }
 
+  /**
+   * Generates or troubleshoots a GraphQL operation from a validated text prompt.
+   *
+   * @param request servlet request containing a bounded UTF-8 {@code text/plain} prompt
+   * @return normalized generation or troubleshooting response
+   */
   @PostMapping(
       path = "/assistant",
       consumes = MediaType.TEXT_PLAIN_VALUE,

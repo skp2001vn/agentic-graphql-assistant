@@ -10,6 +10,16 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+/**
+ * Coordinates intent classification, specialist selection, bounded tool use, and deterministic
+ * GraphQL validation for one assistant request.
+ *
+ * <p>The orchestrator implements a confidence-gated agentic workflow: a router first performs
+ * intent classification, low-confidence requests become clarification outcomes, and accepted
+ * requests run through a specialist with a hard timeout and tool-call guardrails. The final
+ * operation is validated outside the large language model (LLM), keeping schema correctness in
+ * deterministic application code rather than relying on probabilistic generation alone.
+ */
 public final class AssistantOrchestrator {
 
   private final AssistantRouter router;
@@ -24,6 +34,15 @@ public final class AssistantOrchestrator {
 
   private final AssistantRequestLogger requestLogger;
 
+  /**
+   * Creates an orchestrator with logging disabled, primarily for focused application composition.
+   *
+   * @param router model-backed intent classifier
+   * @param specialistWorkflow conditional generation/troubleshooting workflow
+   * @param tools schema-grounding and GraphQL validation tools
+   * @param timeout end-to-end agent latency limit
+   * @param minimumRoutingConfidence confidence threshold below which clarification is required
+   */
   public AssistantOrchestrator(
       AssistantRouter router,
       SpecialistWorkflow specialistWorkflow,
@@ -39,6 +58,16 @@ public final class AssistantOrchestrator {
         AssistantRequestLogger.disabled());
   }
 
+  /**
+   * Creates an orchestrator with request-scoped AI observability.
+   *
+   * @param router model-backed intent classifier
+   * @param specialistWorkflow conditional generation/troubleshooting workflow
+   * @param tools schema-grounding and GraphQL validation tools
+   * @param timeout end-to-end agent latency limit
+   * @param minimumRoutingConfidence confidence threshold below which clarification is required
+   * @param requestLogger structured logger for routing and agent telemetry
+   */
   public AssistantOrchestrator(
       AssistantRouter router,
       SpecialistWorkflow specialistWorkflow,
@@ -59,6 +88,19 @@ public final class AssistantOrchestrator {
     this.requestLogger = Objects.requireNonNull(requestLogger, "requestLogger");
   }
 
+  /**
+   * Runs the bounded router-specialist pipeline for a natural-language prompt.
+   *
+   * <p>A virtual thread isolates the blocking model call while the timeout caps total inference and
+   * tool-loop latency. Successful specialist output is schema-validated before it can cross the
+   * application boundary.
+   *
+   * @param prompt untrusted natural-language generation or troubleshooting request
+   * @return either a validated specialist result or a clarification outcome
+   * @throws AgentTimeoutException when the workflow exceeds its latency budget
+   * @throws AgentExecutionException when a router or specialist fails
+   * @throws InvalidAgentResponseException when model output violates the required contract
+   */
   public OrchestrationOutcome handle(String prompt) {
     if (prompt == null || prompt.isBlank()) {
       throw new IllegalArgumentException("prompt must not be blank");

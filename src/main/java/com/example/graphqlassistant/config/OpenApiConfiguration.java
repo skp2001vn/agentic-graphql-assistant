@@ -4,6 +4,12 @@ import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Publishes the assistant's OpenAPI metadata and reusable request, response, and error examples.
+ *
+ * <p>The examples make the natural-language-to-GraphQL contract discoverable without invoking an AI
+ * model and document the stable failure taxonomy for provider and agent errors.
+ */
 @Configuration(proxyBeanMethods = false)
 @OpenAPIDefinition(
     info =
@@ -13,9 +19,11 @@ import org.springframework.context.annotation.Configuration;
             description = "Generates or troubleshoots GraphQL operations without executing them."))
 public class OpenApiConfiguration {
 
+  /** Example natural-language request for GraphQL generation. */
   public static final String GENERATE_REQUEST =
       "Generate a query that lists country codes and names.";
 
+  /** Example successful response from the generation specialist. */
   public static final String GENERATE_RESPONSE =
       """
       {
@@ -32,6 +40,7 @@ public class OpenApiConfiguration {
       }
       """;
 
+  /** Example successful response from the troubleshooting specialist. */
   public static final String TROUBLESHOOT_RESPONSE =
       """
       {
@@ -54,6 +63,7 @@ public class OpenApiConfiguration {
       }
       """;
 
+  /** Example error for an empty, malformed, or unreadable prompt. */
   public static final String INVALID_REQUEST =
       """
       {
@@ -66,6 +76,7 @@ public class OpenApiConfiguration {
       }
       """;
 
+  /** Example error for a prompt that exceeds the bounded request size. */
   public static final String REQUEST_TOO_LARGE =
       """
       {
@@ -78,6 +89,7 @@ public class OpenApiConfiguration {
       }
       """;
 
+  /** Example error for an unsupported request media type or character encoding. */
   public static final String UNSUPPORTED_MEDIA_TYPE =
       """
       {
@@ -90,6 +102,7 @@ public class OpenApiConfiguration {
       }
       """;
 
+  /** Example confidence-gating response when the router needs more context. */
   public static final String CLARIFICATION_REQUIRED =
       """
       {
@@ -102,6 +115,7 @@ public class OpenApiConfiguration {
       }
       """;
 
+  /** Example error for an unexpected application failure. */
   public static final String INTERNAL_ERROR =
       """
       {
@@ -114,6 +128,7 @@ public class OpenApiConfiguration {
       }
       """;
 
+  /** Example error for a failed local or hosted model inference request. */
   public static final String AI_PROVIDER_ERROR =
       """
       {
@@ -126,6 +141,7 @@ public class OpenApiConfiguration {
       }
       """;
 
+  /** Example error for model output that violates the structured response contract. */
   public static final String INVALID_AI_RESPONSE =
       """
       {
@@ -138,6 +154,7 @@ public class OpenApiConfiguration {
       }
       """;
 
+  /** Example error for a bounded router, specialist, or tool-loop execution failure. */
   public static final String AGENT_EXECUTION_ERROR =
       """
       {

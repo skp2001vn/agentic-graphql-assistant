@@ -14,6 +14,12 @@ import dev.langchain4j.service.V;
 @FunctionalInterface
 public interface TroubleshootingModelAgent {
 
+  /**
+   * Runs the raw LLM diagnosis loop, including validation and targeted schema-inspection tools.
+   *
+   * @param prompt untrusted troubleshooting request and GraphQL operation
+   * @return JSON structured output consumed by {@link ParsedTroubleshootingAgent}
+   */
   @Agent(
       name = "graphqlTroubleshooting",
       description = "Diagnoses and corrects schema-grounded GraphQL operations")

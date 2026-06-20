@@ -11,12 +11,23 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 
+/**
+ * Loads and parses the configured GraphQL schema before the AI assistant becomes ready.
+ *
+ * <p>Fail-fast schema loading guarantees that prompt grounding, tool responses, and deterministic
+ * validation all operate on the same valid SDL snapshot.
+ */
 @Configuration(proxyBeanMethods = false)
 @EnableConfigurationProperties(AssistantProperties.class)
 public class GraphqlSchemaLoader {
 
   private final AssistantProperties properties;
 
+  /**
+   * Creates the startup schema loader.
+   *
+   * @param properties assistant configuration containing the schema resource location
+   */
   public GraphqlSchemaLoader(AssistantProperties properties) {
     this.properties = properties;
   }

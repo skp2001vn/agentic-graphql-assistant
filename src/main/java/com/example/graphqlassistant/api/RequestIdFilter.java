@@ -12,9 +12,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+/**
+ * Establishes request correlation and completion telemetry around the assistant API.
+ *
+ * <p>The request identifier is propagated through virtual-thread AI workflows by {@link
+ * AssistantRequestContext}, allowing routing, model inference, tool calls, and normalized responses
+ * to share one observability trace without exposing provider secrets.
+ */
 @Component
 public class RequestIdFilter extends OncePerRequestFilter {
 
+  /** HTTP header used to accept and return request correlation identifiers. */
   public static final String REQUEST_ID_HEADER = "X-Request-ID";
 
   static final String REQUEST_ID_ATTRIBUTE = RequestIdFilter.class.getName() + ".requestId";
