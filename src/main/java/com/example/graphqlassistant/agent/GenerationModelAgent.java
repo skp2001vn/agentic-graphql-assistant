@@ -46,8 +46,8 @@ public interface GenerationModelAgent {
       first letter of the operation name. Apply every validation diagnostic in one correction, then
       validate that correction. Never validate the same invalid correction twice. Never execute
       GraphQL or access any external resource. Do not return a final answer unless
-      validateOperation reports valid=true. You have at most four tool calls. Java formats the final
-      operation; no formatting tool is available.
+      validateOperation reports valid=true. You have at most four tool calls. Deterministic
+      post-processing formats the final operation; no formatting tool is available.
 
       After the tool work is complete, return only one JSON object with exactly these fields:
       {"intent":"GENERATE","issues":[],"operation":"...",

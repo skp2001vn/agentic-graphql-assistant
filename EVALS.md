@@ -96,7 +96,7 @@ The router must select `GENERATE`, `TROUBLESHOOT`, or
 Tool calls are read-only, inputs are validated, and tool-call rounds are
 bounded. Evaluations should flag unnecessary tools, unsafe tool arguments,
 invented schema fields, incomplete troubleshooting issue coverage, or a result
-that differs from the final Java validation outcome.
+that differs from the final deterministic validation outcome.
 
 Model-based judging may supplement deterministic grading for semantic quality,
 but it never overrides hard contract or GraphQL-validation failures. The

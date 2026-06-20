@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Selects and configures the runtime large language model provider.
+ * Selects and configures the runtime LLM provider.
  *
  * <p>Both local Ollama inference and OpenAI inference are exposed behind the same provider-neutral
  * chat-model contract. Deterministic temperature, disabled retries, bounded timeouts, and
