@@ -548,6 +548,27 @@ curl http://localhost:8080/health
 curl -X POST http://localhost:8080/assistant \
   -H 'Content-Type: text/plain; charset=UTF-8' \
   --data 'generate the query to get the list of country'
+curl --location 'http://localhost:8080/assistant' \
+  --header 'Content-Type: text/plain' \
+  --data 'debug the below query:
+query CountryQuery($code: ID!) {
+  country(code: $code) {
+    code
+    name1
+    native1
+    emoji
+    capital
+    currency
+    continent {
+      code
+      name
+    }
+    languages {
+      code
+      name
+    }
+  }
+}'
 ```
 
 ## Final Definition of Done

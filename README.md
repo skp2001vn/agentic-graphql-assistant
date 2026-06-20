@@ -326,9 +326,27 @@ sample: the service does not execute it.
 ### Troubleshoot an operation
 
 ```bash
-curl -X POST http://localhost:8080/assistant \
-  -H 'Content-Type: text/plain; charset=UTF-8' \
-  --data 'Troubleshoot query ListCountries { countries { title } }.'
+curl --location 'http://localhost:8080/assistant' \
+  --header 'Content-Type: text/plain' \
+  --data 'debug the below query:
+query CountryQuery($code: ID!) {
+  country(code: $code) {
+    code
+    name1
+    native1
+    emoji
+    capital
+    currency
+    continent {
+      code
+      name
+    }
+    languages {
+      code
+      name
+    }
+  }
+}'
 ```
 
 Example response:
@@ -338,19 +356,39 @@ Example response:
   "intent": "TROUBLESHOOT",
   "issues": [
     {
-      "issue": "Field 'title' is undefined in type 'Country'",
-      "details": "The field 'title' does not exist in the 'Country' type. The valid fields include 'code', 'name', 'native', 'emoji', 'capital', 'currency', 'continent', and 'languages'.",
-      "suggestion": "Use the 'name' field instead of 'title' to retrieve the country's name."
+      "issue": "Field 'name1' is undefined in the 'Country' type.",
+      "details": "The field 'name1' does not exist in the 'Country' type. The correct field name is 'name'.",
+      "suggestion": "Replace 'name1' with 'name' in the query."
+    },
+    {
+      "issue": "Field 'native1' is undefined in the 'Country' type.",
+      "details": "The field 'native1' does not exist in the 'Country' type. The correct field name is 'native'.",
+      "suggestion": "Replace 'native1' with 'native' in the query."
     }
   ],
   "correctedQuery": [
-    "query ListCountries {",
-    "  countries {",
+    "query CountryQuery($code: ID!) {",
+    "  country(code: $code) {",
+    "    code",
     "    name",
+    "    native",
+    "    emoji",
+    "    capital",
+    "    currency",
+    "    continent {",
+    "      code",
+    "      name",
+    "    }",
+    "    languages {",
+    "      code",
+    "      name",
+    "    }",
     "  }",
     "}"
   ],
-  "variables": {}
+  "variables": {
+    "code": "CA"
+  }
 }
 ```
 

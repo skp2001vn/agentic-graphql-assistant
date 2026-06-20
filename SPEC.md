@@ -28,9 +28,6 @@ There is no user interface in the initial version.
 ## 3. Approved Technology Stack
 
 - Java 21 LTS
-  - Deliberately selected instead of Java 25. Spring Boot 4.1 supports Java 17
-    through Java 26, but this project targets Java 21 as the more mature LTS
-    baseline requested for local development.
 - Spring Boot 4.1.0
 - LangChain4j 1.16.3 as the sole AI integration framework
   - Use LangChain4j AI Services, structured outputs, tool calling, Ollama and
@@ -253,10 +250,30 @@ Required fields:
 
 Status: `200 OK`
 
-Example request body:
+Example request:
 
-```text
-Troubleshoot query listCountries { countries { id title } } and return a corrected query.
+```bash
+curl --location 'http://localhost:8080/assistant' \
+  --header 'Content-Type: text/plain' \
+  --data 'debug the below query:
+query CountryQuery($code: ID!) {
+  country(code: $code) {
+    code
+    name1
+    native1
+    emoji
+    capital
+    currency
+    continent {
+      code
+      name
+    }
+    languages {
+      code
+      name
+    }
+  }
+}'
 ```
 
 Example response:
@@ -266,30 +283,39 @@ Example response:
   "intent": "TROUBLESHOOT",
   "issues": [
     {
-      "issue": "Operation name must start with an uppercase letter",
-      "details": "The operation name 'listCountries' does not follow the PascalCase convention.",
-      "suggestion": "Rename the operation to 'ListCountries'."
+      "issue": "Field 'name1' is undefined in the 'Country' type.",
+      "details": "The field 'name1' does not exist in the 'Country' type. The correct field name is 'name'.",
+      "suggestion": "Replace 'name1' with 'name' in the query."
     },
     {
-      "issue": "Field 'id' is undefined in type 'Country'",
-      "details": "The field 'id' does not exist in the 'Country' type.",
-      "suggestion": "Use the existing field 'code' instead of 'id'."
-    },
-    {
-      "issue": "Field 'title' is undefined in type 'Country'",
-      "details": "The field 'title' does not exist in the 'Country' type.",
-      "suggestion": "Use the existing field 'name' instead of 'title'."
+      "issue": "Field 'native1' is undefined in the 'Country' type.",
+      "details": "The field 'native1' does not exist in the 'Country' type. The correct field name is 'native'.",
+      "suggestion": "Replace 'native1' with 'native' in the query."
     }
   ],
   "correctedQuery": [
-    "query ListCountries {",
-    "  countries {",
+    "query CountryQuery($code: ID!) {",
+    "  country(code: $code) {",
     "    code",
     "    name",
+    "    native",
+    "    emoji",
+    "    capital",
+    "    currency",
+    "    continent {",
+    "      code",
+    "      name",
+    "    }",
+    "    languages {",
+    "      code",
+    "      name",
+    "    }",
     "  }",
     "}"
   ],
-  "variables": {}
+  "variables": {
+    "code": "CA"
+  }
 }
 ```
 
