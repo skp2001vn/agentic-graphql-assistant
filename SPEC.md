@@ -28,9 +28,6 @@ There is no user interface in the initial version.
 ## 3. Approved Technology Stack
 
 - Java 21 LTS
-  - Deliberately selected instead of Java 25. Spring Boot 4.1 supports Java 17
-    through Java 26, but this project targets Java 21 as the more mature LTS
-    baseline requested for local development.
 - Spring Boot 4.1.0
 - LangChain4j 1.16.3 as the sole AI integration framework
   - Use LangChain4j AI Services, structured outputs, tool calling, Ollama and
