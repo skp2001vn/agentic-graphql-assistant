@@ -10,6 +10,11 @@ single `/assistant` endpoint supports two workflows:
 The application uses local Ollama `qwen3:8b` by default and can use OpenAI
 instead.
 
+Compared with the Python-based
+[GraphQL Assistant](https://github.com/skp2001vn/graphql-assistant), which
+emphasizes embedding-based RAG and inference optimization, this application
+emphasizes bounded agentic tool use and deterministic GraphQL verification.
+
 ## AI Concepts Covered
 
 - **Intent routing:** classifies each prompt as generation, troubleshooting, or
