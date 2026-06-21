@@ -46,22 +46,22 @@ flowchart TD
     B --> C["LLM intent router"]
 
     C -->|"GENERATE"| G["Generation specialist LLM"]
-    G --> GI["inspectSchema<br/>Retrieve relevant roots and types"]
-    GI --> GC["Create one schema-grounded operation<br/>with variables"]
-    GC --> GV["validateOperation<br/>Validate candidate operation"]
-    GV -->|"Invalid and budget remains"| GR["Revise from all diagnostics"]
+    G --> GI["Deterministic tool: inspectSchema<br/>Retrieve relevant roots and types"]
+    GI --> GC["LLM creates one schema-grounded<br/>operation with variables"]
+    GC --> GV["Deterministic tool: validateOperation<br/>Validate candidate operation"]
+    GV -->|"Invalid and budget remains"| GR["LLM revises from all diagnostics"]
     GR --> GV
     GV -->|"valid=true"| S["Structured specialist result"]
 
     C -->|"TROUBLESHOOT"| T["Troubleshooting specialist LLM"]
-    T --> TV1["validateOperation<br/>Validate submitted operation"]
+    T --> TV1["Deterministic tool: validateOperation<br/>Validate submitted operation"]
     TV1 -->|"Already valid"| S
-    TV1 -->|"Syntax diagnostics"| TF1["Apply exact syntax repair"]
-    TF1 --> TV2["validateOperation<br/>Validate correction"]
-    TV1 -->|"Schema diagnostics"| TI["inspectSchema<br/>Retrieve relevant parent types"]
-    TI --> TF2["Create one correction<br/>covering all diagnostics"]
+    TV1 -->|"Syntax diagnostics"| TF1["LLM applies exact syntax repair"]
+    TF1 --> TV2["Deterministic tool: validateOperation<br/>Validate correction"]
+    TV1 -->|"Schema diagnostics"| TI["Deterministic tool: inspectSchema<br/>Retrieve relevant parent types"]
+    TI --> TF2["LLM creates one correction<br/>covering all diagnostics"]
     TF2 --> TV2
-    TV2 -->|"Still invalid and budget remains"| TF3["Revise correction"]
+    TV2 -->|"Still invalid and budget remains"| TF3["LLM revises correction"]
     TF3 --> TV2
     TV2 -->|"valid=true"| S
 
