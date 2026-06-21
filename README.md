@@ -13,7 +13,8 @@ instead.
 Compared with the Python-based
 [GraphQL Assistant](https://github.com/skp2001vn/graphql-assistant), which
 emphasizes embedding-based RAG and inference optimization, this application
-emphasizes bounded agentic tool use and deterministic GraphQL verification.
+emphasizes bounded agentic tool use with LangChain4j, backed by deterministic
+GraphQL verification.
 
 ## AI Concepts Covered
 
