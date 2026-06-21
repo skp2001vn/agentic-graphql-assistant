@@ -45,24 +45,33 @@ flowchart TD
     A["POST /assistant<br/>UTF-8 text prompt"] --> B["Validate request<br/>Assign request ID"]
     B --> C["LLM intent router"]
 
-    C -->|"GENERATE"| G["Generation specialist LLM<br/>Bounded reasoning and tool loop"]
-    G --> GI["inspectSchema<br/>Retrieve relevant schema context"]
-    GI -->|"Schema context"| G
-    G --> GV["validateOperation<br/>Check candidate operation"]
-    GV -->|"Diagnostics: repair candidate"| G
-    GV -->|"Valid operation"| S["Structured specialist result"]
+    C -->|"GENERATE"| G["Generation specialist LLM"]
+    G --> GI["inspectSchema<br/>Retrieve relevant roots and types"]
+    GI --> GC["Create one schema-grounded operation<br/>with variables"]
+    GC --> GV["validateOperation<br/>Validate candidate operation"]
+    GV -->|"Invalid and budget remains"| GR["Revise from all diagnostics"]
+    GR --> GV
+    GV -->|"valid=true"| S["Structured specialist result"]
 
-    C -->|"TROUBLESHOOT"| T["Troubleshooting specialist LLM<br/>Bounded diagnosis and tool loop"]
-    T --> TV["validateOperation<br/>Diagnose submitted or corrected operation"]
-    TV -->|"Schema diagnostics"| TI["inspectSchema<br/>Retrieve relevant types"]
-    TI -->|"Schema context"| T
-    TV -->|"Syntax diagnostics: repair"| T
-    TV -->|"Valid operation"| S
+    C -->|"TROUBLESHOOT"| T["Troubleshooting specialist LLM"]
+    T --> TV1["validateOperation<br/>Validate submitted operation"]
+    TV1 -->|"Already valid"| S
+    TV1 -->|"Syntax diagnostics"| TF1["Apply exact syntax repair"]
+    TF1 --> TV2["validateOperation<br/>Validate correction"]
+    TV1 -->|"Schema diagnostics"| TI["inspectSchema<br/>Retrieve relevant parent types"]
+    TI --> TF2["Create one correction<br/>covering all diagnostics"]
+    TF2 --> TV2
+    TV2 -->|"Still invalid and budget remains"| TF3["Revise correction"]
+    TF3 --> TV2
+    TV2 -->|"valid=true"| S
 
     C -->|"CLARIFICATION_REQUIRED<br/>or confidence below threshold"| Q["Return 422 clarification guidance<br/>No specialist or tools run"]
 
-    S --> D["Deterministic response processing<br/>Check intent and response contract<br/>Parse and validate GraphQL<br/>Coerce variables and format the AST"]
+    S --> D["Independent deterministic processing<br/>Check intent and response contract<br/>Parse and schema-validate again<br/>Coerce variables and format the AST"]
     D --> R["Return normalized<br/>GENERATE or TROUBLESHOOT JSON"]
+
+    L["Per specialist: at most four tool calls<br/>Whole workflow: hard timeout"] -.-> G
+    L -.-> T
 ```
 
 ## Documentation
