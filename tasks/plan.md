@@ -17,7 +17,7 @@ Date: 2026-06-18
 - Do not require a live Ollama or OpenAI service for automated tests.
 - Run explicit live smoke tests and evals against the user's running Ollama.
 - Keep implementation commits integrated with
-  `https://github.com/skp2001vn/graphql-assistant2`.
+  `https://github.com/skp2001vn/agentic-graphql-assistant`.
 - Within each task, use incremental test and verification checkpoints without
   creating intermediate commits.
 - After every task, run its targeted checks, update `tasks/todo.md`, create one
@@ -60,7 +60,7 @@ exposes the local health endpoint.
 - Health does not call an AI provider.
 - Checkstyle and Spotless are configured for later release verification.
 - The initialized repository tracks
-  `https://github.com/skp2001vn/graphql-assistant2`.
+  `https://github.com/skp2001vn/agentic-graphql-assistant`.
 - Implementation occurs on `codex/build-graphql-assistant`, not directly on
   `main`.
 - The task commit is pushed only after the task's acceptance checks pass.
@@ -532,7 +532,7 @@ configuration when available, and record readiness honestly.
   recommendation.
 - All checklist items in `tasks/todo.md` reflect actual status.
 - Changes are organized into intentional commits on the feature branch.
-- The branch is pushed to `skp2001vn/graphql-assistant2` and a draft PR is
+- The branch is pushed to `skp2001vn/agentic-graphql-assistant` and a draft PR is
   opened after the final task.
 - GitHub authentication, remote reachability, and admin/push permission were
   verified before implementation.

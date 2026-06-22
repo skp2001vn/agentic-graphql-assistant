@@ -115,8 +115,8 @@ The output must report Java 21.
 Clone the repository and enter the project directory:
 
 ```bash
-git clone https://github.com/skp2001vn/graphql-assistant2.git
-cd graphql-assistant2
+git clone https://github.com/skp2001vn/agentic-graphql-assistant.git
+cd agentic-graphql-assistant
 ```
 
 Install Ollama, then make the default model available:
