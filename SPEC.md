@@ -337,7 +337,8 @@ The troubleshooting specialist is responsible for identifying issues.
 Deterministic response processing does not independently construct an issue list
 from GraphQL validation. It does treat LLM output as untrusted: structured
 output is parsed and validated, and returned GraphQL operations are
-syntax/schema checked and pretty-printed before being sent to the client.
+checked by the shared syntax/schema/assistant-contract validator and
+pretty-printed before being sent to the client.
 Unusable LLM output produces a provider-response error rather than an unsafe or
 malformed success response.
 
@@ -463,8 +464,10 @@ clients.
 - Cap a request at four tool-call rounds by default.
 - Record tool names, complete inputs/outputs, duration, and outcome in logs;
   credentials and authorization headers remain excluded.
-- The service performs the single final application-boundary validation even if
-  the agent already called the validation tool.
+- `validateOperation` and final response processing reuse one shared
+  deterministic validator for syntax, schema, and assistant-contract rules.
+- The service invokes that validator at the single final application boundary
+  even if the agent already called the validation tool.
 - Use a strict system prompt and structured-output mapping.
 - Give the model the user prompt and require schema-grounded work through the
   approved tools. Tools may return the full schema only when the bounded schema

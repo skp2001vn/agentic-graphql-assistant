@@ -49,16 +49,16 @@ flowchart TD
     C -->|"GENERATE"| G["Generation specialist LLM"]
     G --> GI["Deterministic tool: inspectSchema<br/>Retrieve relevant roots and types"]
     GI --> GC["LLM creates one schema-grounded<br/>operation with variables"]
-    GC --> GV["Deterministic tool: validateOperation<br/>Validate candidate operation"]
+    GC --> GV["Deterministic tool: validateOperation<br/>Return shared-validator diagnostics"]
     GV -->|"Invalid and budget remains"| GR["LLM revises from all diagnostics"]
     GR --> GV
     GV -->|"valid=true"| S["Structured specialist result"]
 
     C -->|"TROUBLESHOOT"| T["Troubleshooting specialist LLM"]
-    T --> TV1["Deterministic tool: validateOperation<br/>Validate submitted operation"]
+    T --> TV1["Deterministic tool: validateOperation<br/>Return shared-validator diagnostics"]
     TV1 -->|"Already valid"| S
     TV1 -->|"Syntax diagnostics"| TF1["LLM applies exact syntax repair"]
-    TF1 --> TV2["Deterministic tool: validateOperation<br/>Validate correction"]
+    TF1 --> TV2["Deterministic tool: validateOperation<br/>Return shared-validator diagnostics"]
     TV1 -->|"Schema diagnostics"| TI["Deterministic tool: inspectSchema<br/>Retrieve relevant parent types"]
     TI --> TF2["LLM creates one correction<br/>covering all diagnostics"]
     TF2 --> TV2
@@ -68,12 +68,27 @@ flowchart TD
 
     C -->|"CLARIFICATION_REQUIRED<br/>or confidence below threshold"| Q["Return 422 clarification guidance<br/>No specialist or tools run"]
 
-    S --> D["Independent deterministic processing<br/>Check intent and response contract<br/>Parse and schema-validate again<br/>Coerce variables and format the AST"]
-    D --> R["Return normalized<br/>GENERATE or TROUBLESHOOT JSON"]
+    S --> D["AssistantService<br/>Check routed intent and response contract"]
+    D --> P["GraphqlOperationProcessor<br/>Invoke shared validation at final boundary<br/>Coerce variables and format the AST"]
+    P --> R["Return normalized<br/>GENERATE or TROUBLESHOOT JSON"]
+
+    V["GraphqlOperationValidator<br/>Shared syntax, schema, and<br/>assistant-contract rules"]
+    GV -.-> V
+    TV1 -.-> V
+    TV2 -.-> V
+    P -.-> V
 
     L["Per specialist: at most four tool calls<br/>Whole workflow: hard timeout"] -.-> G
     L -.-> T
 ```
+
+`GraphqlOperationValidator` is the shared deterministic validation core. The
+`validateOperation` tool maps its diagnostics into model-facing results for
+self-correction. After the specialist returns, `AssistantService` always sends
+the operation through `GraphqlOperationProcessor`, which invokes the same
+validation rules at the final application boundary before coercing variables
+and formatting the parsed AST. The orchestrator does not perform another
+schema-validation pass.
 
 ## Documentation
 

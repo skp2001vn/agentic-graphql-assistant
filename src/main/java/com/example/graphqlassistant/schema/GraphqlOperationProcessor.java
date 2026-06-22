@@ -28,10 +28,10 @@ import java.util.stream.Collectors;
 /**
  * Deterministically validates and canonicalizes GraphQL operations returned by AI specialists.
  *
- * <p>This processor is a post-generation guardrail. It parses the operation into an abstract syntax
- * tree (AST), enforces the assistant's one-operation contract, validates against the configured
- * schema, requires variable-based arguments, synthesizes safe example values when requested, and
- * applies GraphQL variable coercion. No generated operation is executed.
+ * <p>This processor is the final application-boundary guardrail. It delegates syntax, schema, and
+ * assistant-contract checks to the shared {@link GraphqlOperationValidator}, then synthesizes safe
+ * example values when requested, applies GraphQL variable coercion, and prints the validated
+ * abstract syntax tree (AST). No generated operation is executed.
  */
 public final class GraphqlOperationProcessor {
 
@@ -44,7 +44,7 @@ public final class GraphqlOperationProcessor {
   private final GraphQLSchema schema;
 
   /**
-   * Builds an executable validation schema from the configured SDL registry.
+   * Creates a processor with validation rules built from the configured SDL registry.
    *
    * @param schemaContext loaded schema text and parsed type registry
    */
@@ -52,6 +52,11 @@ public final class GraphqlOperationProcessor {
     this(new GraphqlOperationValidator(schemaContext));
   }
 
+  /**
+   * Creates a processor that reuses the application's shared operation validator.
+   *
+   * @param operationValidator shared syntax, schema, and assistant-contract validator
+   */
   public GraphqlOperationProcessor(GraphqlOperationValidator operationValidator) {
     this.operationValidator = Objects.requireNonNull(operationValidator, "operationValidator");
     schema = operationValidator.schema();

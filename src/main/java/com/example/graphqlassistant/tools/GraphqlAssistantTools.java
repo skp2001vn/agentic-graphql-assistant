@@ -88,6 +88,9 @@ public final class GraphqlAssistantTools {
   /**
    * Parses and validates a candidate operation against syntax, schema, and assistant conventions.
    *
+   * <p>The final application boundary invokes the same shared validator after the specialist
+   * returns; this tool exposes its diagnostics so the model can self-correct first.
+   *
    * @param operation model-generated GraphQL operation
    * @return structured diagnostics suitable for self-correction in the tool loop
    */
