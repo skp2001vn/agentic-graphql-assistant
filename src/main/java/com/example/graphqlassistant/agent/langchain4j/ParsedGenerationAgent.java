@@ -1,5 +1,7 @@
-package com.example.graphqlassistant.agent;
+package com.example.graphqlassistant.agent.langchain4j;
 
+import com.example.graphqlassistant.agent.GenerationAgent;
+import com.example.graphqlassistant.agent.SpecialistResult;
 import dev.langchain4j.agentic.Agent;
 import dev.langchain4j.service.V;
 import java.util.Objects;

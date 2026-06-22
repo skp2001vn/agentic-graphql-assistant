@@ -1,8 +1,8 @@
 package com.example.graphqlassistant.evals;
 
-import com.example.graphqlassistant.api.AssistantResponse;
-import com.example.graphqlassistant.api.GenerateResponse;
-import com.example.graphqlassistant.api.TroubleshootResponse;
+import com.example.graphqlassistant.api.model.AssistantResponse;
+import com.example.graphqlassistant.api.model.GenerateResponse;
+import com.example.graphqlassistant.api.model.TroubleshootResponse;
 import com.example.graphqlassistant.schema.GraphqlOperationProcessor;
 import java.util.ArrayList;
 import java.util.List;

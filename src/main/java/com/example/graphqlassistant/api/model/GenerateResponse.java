@@ -1,4 +1,4 @@
-package com.example.graphqlassistant.api;
+package com.example.graphqlassistant.api.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Collections;

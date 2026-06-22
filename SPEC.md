@@ -134,12 +134,15 @@ Rules:
     │   ├── java/com/example/graphqlassistant/
     │   │   ├── GraphqlAssistantApplication.java
     │   │   ├── api/
+    │   │   │   └── model/
     │   │   ├── agent/
+    │   │   │   └── langchain4j/
     │   │   ├── assistant/
     │   │   ├── config/
     │   │   ├── provider/
     │   │   ├── schema/
     │   │   └── tools/
+    │   │       └── model/
     │   └── resources/
     │       ├── application.yml
     │       └── schema.graphql
@@ -149,7 +152,10 @@ Rules:
 ```
 
 Packages may be collapsed when a separate layer would contain only one trivial
-class. The design should remain small and task-oriented.
+class. Package roots expose the primary operational classes. Immutable API and
+tool contracts live in `api.model` and `tools.model`; experimental
+LangChain4j-specific adapters live in `agent.langchain4j`. The design should
+remain small and task-oriented.
 
 ## 6. API Conventions
 

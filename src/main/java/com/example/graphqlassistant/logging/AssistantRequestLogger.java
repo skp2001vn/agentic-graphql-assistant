@@ -1,7 +1,7 @@
 package com.example.graphqlassistant.logging;
 
 import com.example.graphqlassistant.agent.RoutingIntent;
-import com.example.graphqlassistant.api.AssistantResponse;
+import com.example.graphqlassistant.api.model.AssistantResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.langchain4j.model.chat.response.ChatResponse;

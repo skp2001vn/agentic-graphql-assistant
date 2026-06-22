@@ -1,7 +1,7 @@
 package com.example.graphqlassistant.evals;
 
 import com.example.graphqlassistant.agent.AssistantOrchestrator;
-import com.example.graphqlassistant.agent.LangChain4jAgentFactory;
+import com.example.graphqlassistant.agent.langchain4j.LangChain4jAgentFactory;
 import com.example.graphqlassistant.assistant.AssistantService;
 import com.example.graphqlassistant.provider.AssistantAiProvider;
 import com.example.graphqlassistant.schema.GraphqlOperationProcessor;

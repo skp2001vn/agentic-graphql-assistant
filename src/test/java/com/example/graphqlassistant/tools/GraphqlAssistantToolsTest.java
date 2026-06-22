@@ -4,6 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.graphqlassistant.schema.GraphqlSchemaContext;
+import com.example.graphqlassistant.tools.model.FieldSummary;
+import com.example.graphqlassistant.tools.model.InspectSchemaInput;
+import com.example.graphqlassistant.tools.model.OperationDiagnostic;
+import com.example.graphqlassistant.tools.model.OperationValidationResult;
+import com.example.graphqlassistant.tools.model.SchemaInspectionResult;
+import com.example.graphqlassistant.tools.model.TypeSummary;
+import com.example.graphqlassistant.tools.model.ValidateOperationInput;
 import graphql.schema.idl.SchemaParser;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;

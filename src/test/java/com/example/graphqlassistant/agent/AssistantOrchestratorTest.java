@@ -3,6 +3,7 @@ package com.example.graphqlassistant.agent;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.example.graphqlassistant.agent.langchain4j.LangChain4jAgentFactory;
 import com.example.graphqlassistant.schema.GraphqlSchemaContext;
 import com.example.graphqlassistant.tools.GraphqlAssistantTools;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
