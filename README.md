@@ -1,14 +1,14 @@
 # GraphQL Assistant
 
-GraphQL Assistant combines LLM agents with deterministic GraphQL tooling. Its
-single `/assistant` endpoint supports two workflows:
+GraphQL Assistant supports two workflows through a single `/assistant` endpoint
+using natural-language requests:
 
-- generate a named, schema-valid GraphQL query or mutation from natural language
-- troubleshoot a submitted operation and return diagnoses plus a validated
+- generate a named, schema-valid GraphQL query or mutation
+- troubleshoot a GraphQL operation and return diagnoses with a validated
   correction
 
-The application uses local Ollama `qwen3:8b` by default and can use OpenAI
-instead.
+The application uses local Ollama `qwen3:8b` by default and also supports
+OpenAI.
 
 Compared with the Python-based
 [GraphQL Assistant](https://github.com/skp2001vn/graphql-assistant), which
