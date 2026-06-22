@@ -1,4 +1,4 @@
-package com.example.graphqlassistant.api.model;
+package com.example.graphqlassistant.api;
 
 /**
  * Client-facing GraphQL diagnosis with explanation and actionable repair guidance.

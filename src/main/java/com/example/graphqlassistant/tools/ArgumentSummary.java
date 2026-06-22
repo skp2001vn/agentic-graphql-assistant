@@ -1,4 +1,4 @@
-package com.example.graphqlassistant.tools.model;
+package com.example.graphqlassistant.tools;
 
 /**
  * Compact GraphQL argument metadata returned to an AI specialist for schema grounding.

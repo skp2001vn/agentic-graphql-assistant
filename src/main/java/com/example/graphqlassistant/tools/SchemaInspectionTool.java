@@ -1,10 +1,5 @@
 package com.example.graphqlassistant.tools;
 
-import com.example.graphqlassistant.tools.model.ArgumentSummary;
-import com.example.graphqlassistant.tools.model.FieldSummary;
-import com.example.graphqlassistant.tools.model.InspectSchemaInput;
-import com.example.graphqlassistant.tools.model.SchemaInspectionResult;
-import com.example.graphqlassistant.tools.model.TypeSummary;
 import graphql.language.AstPrinter;
 import graphql.language.FieldDefinition;
 import graphql.language.InputObjectTypeDefinition;

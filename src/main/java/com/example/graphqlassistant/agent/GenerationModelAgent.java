@@ -1,4 +1,4 @@
-package com.example.graphqlassistant.agent.langchain4j;
+package com.example.graphqlassistant.agent;
 
 import dev.langchain4j.agentic.Agent;
 import dev.langchain4j.service.SystemMessage;

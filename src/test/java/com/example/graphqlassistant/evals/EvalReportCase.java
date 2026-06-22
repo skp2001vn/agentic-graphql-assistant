@@ -1,6 +1,6 @@
 package com.example.graphqlassistant.evals;
 
-import com.example.graphqlassistant.api.model.AssistantResponse;
+import com.example.graphqlassistant.api.AssistantResponse;
 import java.util.List;
 
 record EvalReportCase(

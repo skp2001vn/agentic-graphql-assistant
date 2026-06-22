@@ -1,12 +1,5 @@
-package com.example.graphqlassistant.agent.langchain4j;
+package com.example.graphqlassistant.agent;
 
-import com.example.graphqlassistant.agent.AssistantRouter;
-import com.example.graphqlassistant.agent.GenerationAgent;
-import com.example.graphqlassistant.agent.InvalidAgentResponseException;
-import com.example.graphqlassistant.agent.RoutingIntent;
-import com.example.graphqlassistant.agent.SpecialistResult;
-import com.example.graphqlassistant.agent.SpecialistWorkflow;
-import com.example.graphqlassistant.agent.TroubleshootingAgent;
 import com.example.graphqlassistant.tools.GraphqlAssistantTools;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
