@@ -136,18 +136,6 @@ class AssistantOrchestratorTest {
   }
 
   @Test
-  void independentlyRejectsInvalidSpecialistOperations() {
-    AssistantOrchestrator orchestrator =
-        orchestrator(
-            prompt -> new RoutingDecision(RoutingIntent.GENERATE, "Clear request", 0.95),
-            (prompt, intent) -> new SpecialistResult("query Greeting { missing }"));
-
-    assertThatThrownBy(() -> orchestrator.handle("Generate a greeting query"))
-        .isInstanceOf(InvalidAgentResponseException.class)
-        .hasMessageContaining("specialist returned an invalid GraphQL operation");
-  }
-
-  @Test
   void boundsTheOverallWorkflowByTheConfiguredTimeout() {
     AssistantOrchestrator orchestrator =
         new AssistantOrchestrator(

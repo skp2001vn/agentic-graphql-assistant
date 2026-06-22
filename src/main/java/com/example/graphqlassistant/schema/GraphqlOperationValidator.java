@@ -1,7 +1,7 @@
-package com.example.graphqlassistant.tools;
+package com.example.graphqlassistant.schema;
 
-import graphql.language.Argument;
 import graphql.language.Document;
+import graphql.language.Field;
 import graphql.language.Node;
 import graphql.language.OperationDefinition;
 import graphql.language.SourceLocation;
@@ -9,60 +9,69 @@ import graphql.language.VariableReference;
 import graphql.parser.InvalidSyntaxException;
 import graphql.parser.Parser;
 import graphql.schema.GraphQLSchema;
-import graphql.schema.idl.TypeDefinitionRegistry;
 import graphql.schema.idl.UnExecutableSchemaGenerator;
 import graphql.validation.ValidationError;
 import graphql.validation.Validator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-final class OperationValidationTool {
+/** Applies schema and assistant-contract validation to GraphQL operations. */
+public final class GraphqlOperationValidator {
+
+  private static final int MAX_OPERATION_LENGTH = 100 * 1024;
 
   private static final Pattern MISSING_ARGUMENT_NAME =
       Pattern.compile("\\b([_A-Za-z][_0-9A-Za-z]*)\\s*\\(\\s*([_A-Za-z][_0-9A-Za-z]*)\\s*\\)");
 
   private final GraphQLSchema schema;
 
-  OperationValidationTool(TypeDefinitionRegistry registry) {
-    schema = UnExecutableSchemaGenerator.makeUnExecutableSchema(registry);
+  public GraphqlOperationValidator(GraphqlSchemaContext schemaContext) {
+    Objects.requireNonNull(schemaContext, "schemaContext");
+    schema =
+        UnExecutableSchemaGenerator.makeUnExecutableSchema(schemaContext.typeDefinitionRegistry());
   }
 
-  OperationValidationResult validate(ValidateOperationInput input) {
+  public ValidationResult validate(String operation) {
+    if (operation.length() > MAX_OPERATION_LENGTH) {
+      return new ValidationResult(
+          null,
+          List.of(
+              new Diagnostic(
+                  "OperationTooLarge", "Operation must not exceed 100 KB", 0, 0, List.of())));
+    }
     Document document;
     try {
-      document = Parser.parse(input.operation());
+      document = Parser.parse(operation);
     } catch (InvalidSyntaxException exception) {
       SourceLocation location = exception.getLocation();
-      OperationDiagnostic argumentSyntax =
-          missingArgumentNameDiagnostic(input.operation(), location);
-      return new OperationValidationResult(
-          false,
+      Diagnostic argumentSyntax = missingArgumentNameDiagnostic(operation, location);
+      return new ValidationResult(
+          null,
           List.of(
               argumentSyntax != null
                   ? argumentSyntax
-                  : new OperationDiagnostic(
-                      "InvalidSyntax",
-                      exception.getMessage(),
-                      location.getLine(),
-                      location.getColumn(),
-                      List.of())));
+                  : diagnostic("InvalidSyntax", exception.getMessage(), location)));
     }
 
-    List<OperationDiagnostic> diagnostics = new ArrayList<>();
+    List<Diagnostic> diagnostics = new ArrayList<>();
     diagnostics.addAll(operationContractDiagnostics(document));
     diagnostics.addAll(
         new Validator()
             .validateDocument(schema, document, Locale.ROOT).stream()
                 .map(this::toDiagnostic)
                 .toList());
-    return new OperationValidationResult(diagnostics.isEmpty(), diagnostics);
+    return new ValidationResult(document, diagnostics);
   }
 
-  private OperationDiagnostic missingArgumentNameDiagnostic(
-      String operation, SourceLocation location) {
+  GraphQLSchema schema() {
+    return schema;
+  }
+
+  private Diagnostic missingArgumentNameDiagnostic(String operation, SourceLocation location) {
     Matcher matcher = MISSING_ARGUMENT_NAME.matcher(operation);
     if (!matcher.find()) {
       return null;
@@ -73,8 +82,8 @@ final class OperationValidationTool {
     if (!Pattern.compile("\\$" + Pattern.quote(argumentName) + "\\s*:").matcher(operation).find()) {
       return null;
     }
-    SourceLocation safeLocation = location == null ? new SourceLocation(0, 0) : location;
-    return new OperationDiagnostic(
+    SourceLocation safeLocation = safeLocation(location);
+    return new Diagnostic(
         "InvalidArgumentSyntax",
         "Field '"
             + fieldName
@@ -90,7 +99,7 @@ final class OperationValidationTool {
         List.of(fieldName));
   }
 
-  private List<OperationDiagnostic> operationContractDiagnostics(Document document) {
+  private List<Diagnostic> operationContractDiagnostics(Document document) {
     List<OperationDefinition> operations = document.getDefinitionsOfType(OperationDefinition.class);
     if (operations.size() != 1) {
       return List.of(
@@ -101,7 +110,7 @@ final class OperationValidationTool {
     }
 
     OperationDefinition operation = operations.getFirst();
-    List<OperationDiagnostic> diagnostics = new ArrayList<>();
+    List<Diagnostic> diagnostics = new ArrayList<>();
     if (operation.getName() == null || operation.getName().isBlank()) {
       diagnostics.add(
           diagnostic(
@@ -126,31 +135,57 @@ final class OperationValidationTool {
     return diagnostics;
   }
 
-  private void collectLiteralArguments(Node<?> node, List<OperationDiagnostic> diagnostics) {
-    if (node instanceof Argument argument && !(argument.getValue() instanceof VariableReference)) {
-      diagnostics.add(
-          diagnostic(
-              "LiteralArgument",
-              "Argument '" + argument.getName() + "' must use a declared variable",
-              argument.getSourceLocation()));
+  private void collectLiteralArguments(Node<?> node, List<Diagnostic> diagnostics) {
+    if (node instanceof Field field) {
+      field.getArguments().stream()
+          .filter(argument -> !(argument.getValue() instanceof VariableReference))
+          .map(
+              argument ->
+                  diagnostic(
+                      "LiteralArgument",
+                      "Argument '" + argument.getName() + "' must use a declared variable",
+                      argument.getSourceLocation()))
+          .forEach(diagnostics::add);
     }
     node.getChildren().forEach(child -> collectLiteralArguments(child, diagnostics));
   }
 
-  private OperationDiagnostic diagnostic(String code, String message, SourceLocation location) {
-    SourceLocation safeLocation = location == null ? new SourceLocation(0, 0) : location;
-    return new OperationDiagnostic(
+  private Diagnostic diagnostic(String code, String message, SourceLocation location) {
+    SourceLocation safeLocation = safeLocation(location);
+    return new Diagnostic(
         code, message, safeLocation.getLine(), safeLocation.getColumn(), List.of());
   }
 
-  private OperationDiagnostic toDiagnostic(ValidationError error) {
+  private Diagnostic toDiagnostic(ValidationError error) {
     SourceLocation location =
-        error.getLocations().isEmpty() ? new SourceLocation(0, 0) : error.getLocations().get(0);
-    return new OperationDiagnostic(
+        error.getLocations().isEmpty() ? new SourceLocation(0, 0) : error.getLocations().getFirst();
+    return new Diagnostic(
         error.getValidationErrorType().toString(),
         error.getMessage(),
         location.getLine(),
         location.getColumn(),
         error.getQueryPath() == null ? List.of() : error.getQueryPath());
+  }
+
+  private SourceLocation safeLocation(SourceLocation location) {
+    return location == null ? new SourceLocation(0, 0) : location;
+  }
+
+  public record ValidationResult(Document document, List<Diagnostic> diagnostics) {
+
+    public ValidationResult {
+      diagnostics = List.copyOf(diagnostics);
+    }
+
+    public boolean valid() {
+      return diagnostics.isEmpty();
+    }
+  }
+
+  public record Diagnostic(String code, String message, int line, int column, List<String> path) {
+
+    public Diagnostic {
+      path = List.copyOf(path);
+    }
   }
 }

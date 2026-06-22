@@ -113,32 +113,11 @@ class GraphqlAssistantToolsTest {
   }
 
   @Test
-  void formatsOperationsCanonically() {
-    OperationFormattingResult result =
-        tools.formatOperation("query Country($code:ID!){country(code:$code){code name}}");
-
-    assertThat(result.formattedOperation())
-        .isEqualTo(
-            """
-            query Country($code: ID!) {
-              country(code: $code) {
-                code
-                name
-              }
-            }
-            """
-                .strip());
-  }
-
-  @Test
   void rejectsInvalidToolArgumentsBeforeUse() {
     assertThatThrownBy(() -> new InspectSchemaInput(List.of("not a GraphQL name")))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("typeNames");
     assertThatThrownBy(() -> new ValidateOperationInput(" "))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("operation");
-    assertThatThrownBy(() -> new FormatOperationInput(null))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("operation");
   }

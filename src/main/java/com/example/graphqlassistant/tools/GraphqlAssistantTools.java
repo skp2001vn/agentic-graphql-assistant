@@ -1,6 +1,7 @@
 package com.example.graphqlassistant.tools;
 
 import com.example.graphqlassistant.logging.AssistantRequestLogger;
+import com.example.graphqlassistant.schema.GraphqlOperationValidator;
 import com.example.graphqlassistant.schema.GraphqlSchemaContext;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -12,8 +13,9 @@ import java.util.Objects;
  *
  * <p>The tools implement retrieval-augmented generation (RAG) over schema metadata without a vector
  * database: specialists retrieve only relevant root and type definitions, validate candidate
- * operations deterministically, and optionally canonicalize syntax. Per-thread tracking enforces a
- * bounded tool budget and verifies that generation consulted the schema before returning.
+ * operations deterministically, and use structured diagnostics for repair. Per-thread tracking
+ * enforces a bounded tool budget and verifies that generation consulted the schema before
+ * returning.
  */
 public final class GraphqlAssistantTools {
 
@@ -22,9 +24,7 @@ public final class GraphqlAssistantTools {
 
   private final SchemaInspectionTool schemaInspection;
 
-  private final OperationValidationTool operationValidation;
-
-  private final OperationFormattingTool operationFormatting;
+  private final GraphqlOperationValidator operationValidator;
 
   private final AssistantRequestLogger requestLogger;
 
@@ -34,12 +34,10 @@ public final class GraphqlAssistantTools {
 
   private GraphqlAssistantTools(
       SchemaInspectionTool schemaInspection,
-      OperationValidationTool operationValidation,
-      OperationFormattingTool operationFormatting,
+      GraphqlOperationValidator operationValidator,
       AssistantRequestLogger requestLogger) {
     this.schemaInspection = schemaInspection;
-    this.operationValidation = operationValidation;
-    this.operationFormatting = operationFormatting;
+    this.operationValidator = operationValidator;
     this.requestLogger = requestLogger;
   }
 
@@ -50,23 +48,20 @@ public final class GraphqlAssistantTools {
    * @return bounded GraphQL tool facade
    */
   public static GraphqlAssistantTools from(GraphqlSchemaContext schemaContext) {
-    return from(schemaContext, AssistantRequestLogger.disabled());
+    return from(
+        schemaContext,
+        new GraphqlOperationValidator(schemaContext),
+        AssistantRequestLogger.disabled());
   }
 
-  /**
-   * Creates the schema-inspection and validation tool suite with structured telemetry.
-   *
-   * @param schemaContext configured schema grounding context
-   * @param requestLogger logger for tool inputs, outputs, outcomes, and latency
-   * @return bounded GraphQL tool facade
-   */
   public static GraphqlAssistantTools from(
-      GraphqlSchemaContext schemaContext, AssistantRequestLogger requestLogger) {
+      GraphqlSchemaContext schemaContext,
+      GraphqlOperationValidator operationValidator,
+      AssistantRequestLogger requestLogger) {
     Objects.requireNonNull(schemaContext, "schemaContext");
     return new GraphqlAssistantTools(
         new SchemaInspectionTool(schemaContext.typeDefinitionRegistry()),
-        new OperationValidationTool(schemaContext.typeDefinitionRegistry()),
-        new OperationFormattingTool(),
+        Objects.requireNonNull(operationValidator, "operationValidator"),
         Objects.requireNonNull(requestLogger, "requestLogger"));
   }
 
@@ -101,23 +96,7 @@ public final class GraphqlAssistantTools {
       @P("GraphQL operation to validate") String operation) {
     recordToolCall();
     ValidateOperationInput input = new ValidateOperationInput(operation);
-    return requestLogger.toolCall(
-        "validateOperation", input, () -> operationValidation.validate(input));
-  }
-
-  /**
-   * Parses and prints an operation using GraphQL Java's canonical AST formatter.
-   *
-   * @param operation GraphQL operation to canonicalize
-   * @return formatted operation
-   */
-  @Tool("Parse and return a canonically formatted GraphQL operation")
-  public OperationFormattingResult formatOperation(
-      @P("GraphQL operation to format") String operation) {
-    recordToolCall();
-    FormatOperationInput input = new FormatOperationInput(operation);
-    return requestLogger.toolCall(
-        "formatOperation", input, () -> operationFormatting.format(input));
+    return requestLogger.toolCall("validateOperation", input, () -> validationResult(input));
   }
 
   /** Starts request-local tool-budget accounting before a specialist agent executes. */
@@ -155,5 +134,21 @@ public final class GraphqlAssistantTools {
       throw new IllegalStateException("Assistant exceeded its tool call limit");
     }
     toolCalls.set(calls + 1);
+  }
+
+  private OperationValidationResult validationResult(ValidateOperationInput input) {
+    var validation = operationValidator.validate(input.operation());
+    List<OperationDiagnostic> diagnostics =
+        validation.diagnostics().stream()
+            .map(
+                diagnostic ->
+                    new OperationDiagnostic(
+                        diagnostic.code(),
+                        diagnostic.message(),
+                        diagnostic.line(),
+                        diagnostic.column(),
+                        diagnostic.path()))
+            .toList();
+    return new OperationValidationResult(validation.valid(), diagnostics);
   }
 }

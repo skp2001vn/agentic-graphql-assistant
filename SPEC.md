@@ -458,14 +458,13 @@ clients.
     types relevant to a request
   - `validateOperation`: parse and validate a proposed operation against the
     configured schema and return structured diagnostics
-  - `formatOperation`: return a canonical pretty-printed operation
 - Tool inputs and outputs use typed records and are validated at their
   boundaries.
 - Cap a request at four tool-call rounds by default.
 - Record tool names, complete inputs/outputs, duration, and outcome in logs;
   credentials and authorization headers remain excluded.
-- The service performs final validation even if the agent already called the
-  validation tool.
+- The service performs the single final application-boundary validation even if
+  the agent already called the validation tool.
 - Use a strict system prompt and structured-output mapping.
 - Give the model the user prompt and require schema-grounded work through the
   approved tools. Tools may return the full schema only when the bounded schema

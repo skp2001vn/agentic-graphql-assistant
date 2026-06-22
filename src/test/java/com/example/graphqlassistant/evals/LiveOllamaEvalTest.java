@@ -17,13 +17,14 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.convert.DurationStyle;
 
 @Tag("live-eval")
 class LiveOllamaEvalTest {
 
   private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(60);
 
-  private static final long WARM_LATENCY_TARGET_MILLIS = 30_000;
+  private static final Duration WARM_LATENCY_TARGET = warmLatencyTarget();
 
   @Test
   void localQwenMeetsQualityAndWarmLatencyTargets() {
@@ -40,7 +41,8 @@ class LiveOllamaEvalTest {
     }
     long passed = results.stream().filter(EvalReportCase::passed).count();
     boolean latencyTargetMet =
-        results.stream().allMatch(result -> result.latencyMillis() < WARM_LATENCY_TARGET_MILLIS);
+        results.stream()
+            .allMatch(result -> result.latencyMillis() < WARM_LATENCY_TARGET.toMillis());
     EvalReport report =
         new EvalReport(
             "live",
@@ -58,7 +60,7 @@ class LiveOllamaEvalTest {
         .as("target/evals/live-ollama-report.json contains per-case failures")
         .isGreaterThanOrEqualTo(0.9);
     assertThat(report.latencyTargetMet())
-        .as("every request after warmup should complete in under 30 seconds")
+        .as("every request after warmup should complete in under %s", WARM_LATENCY_TARGET)
         .isTrue();
   }
 
@@ -132,5 +134,13 @@ class LiveOllamaEvalTest {
 
   private static long elapsedMillis(long startedAt) {
     return (System.nanoTime() - startedAt) / 1_000_000;
+  }
+
+  private static Duration warmLatencyTarget() {
+    String configured =
+        System.getProperty(
+            "assistant.ai.warm-response-target",
+            System.getenv().getOrDefault("ASSISTANT_AI_WARM_RESPONSE_TARGET", "30s"));
+    return DurationStyle.detectAndParse(configured);
   }
 }

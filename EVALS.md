@@ -63,6 +63,9 @@ Make sure Ollama is reachable at `http://localhost:11434`, then run:
 ./mvnw test -Pevals-live
 ```
 
+The suite uses `ASSISTANT_AI_WARM_RESPONSE_TARGET` when set, matching the
+application setting, and otherwise defaults to `30s`.
+
 The live suite performs real generation and troubleshooting requests with
 `qwen3:8b`. It records each case's output, tool trace, latency, pass/fail
 reason, and aggregate score in `target/evals/live-ollama-report.json`. It is
