@@ -5,9 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.graphqlassistant.agent.AssistantOrchestrator;
 import com.example.graphqlassistant.agent.InvalidAgentResponseException;
-import com.example.graphqlassistant.agent.langchain4j.LangChain4jAgentFactory;
-import com.example.graphqlassistant.api.model.AssistantResponse;
-import com.example.graphqlassistant.api.model.TroubleshootResponse;
+import com.example.graphqlassistant.agent.LangChain4jAgentFactory;
+import com.example.graphqlassistant.api.AssistantResponse;
+import com.example.graphqlassistant.api.TroubleshootResponse;
 import com.example.graphqlassistant.provider.AssistantAiProvider;
 import com.example.graphqlassistant.schema.GraphqlOperationProcessor;
 import com.example.graphqlassistant.schema.GraphqlSchemaContext;

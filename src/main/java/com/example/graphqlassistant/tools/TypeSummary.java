@@ -1,4 +1,4 @@
-package com.example.graphqlassistant.tools.model;
+package com.example.graphqlassistant.tools;
 
 import java.util.List;
 

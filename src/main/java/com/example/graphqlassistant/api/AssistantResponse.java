@@ -1,4 +1,4 @@
-package com.example.graphqlassistant.api.model;
+package com.example.graphqlassistant.api;
 
 /** Closed API response hierarchy for generation and troubleshooting assistant intents. */
 public sealed interface AssistantResponse permits GenerateResponse, TroubleshootResponse {

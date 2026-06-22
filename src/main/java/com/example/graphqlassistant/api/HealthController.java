@@ -1,6 +1,5 @@
 package com.example.graphqlassistant.api;
 
-import com.example.graphqlassistant.api.model.HealthResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;

@@ -90,26 +90,6 @@ validation rules at the final application boundary before coercing variables
 and formatting the parsed AST. The orchestrator does not perform another
 schema-validation pass.
 
-## Source organization
-
-Package roots contain the operational classes contributors usually need to
-find first. Immutable boundary contracts and framework-specific adapters live
-in focused subpackages:
-
-| Package | Responsibility |
-| --- | --- |
-| `agent` | Provider-neutral orchestration, routing, specialist contracts, outcomes, and failures |
-| `agent.langchain4j` | LangChain4j model interfaces, parsed adapters, and agent factory |
-| `api` | HTTP controllers, request filtering, and exception translation |
-| `api.model` | Public JSON success, health, and error payloads |
-| `tools` | `GraphqlAssistantTools` facade and schema-inspection implementation |
-| `tools.model` | Typed tool inputs, results, diagnostics, and schema summaries |
-
-Add future classes according to ownership rather than class suffix: executable
-HTTP or tool behavior belongs in the package root, immutable wire/tool
-contracts belong in `model`, and LangChain4j-specific implementation belongs in
-`agent.langchain4j`.
-
 ## Documentation
 
 This README is the practical setup, usage, and contribution guide. The

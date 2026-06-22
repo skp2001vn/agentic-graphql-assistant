@@ -1,4 +1,4 @@
-package com.example.graphqlassistant.tools.model;
+package com.example.graphqlassistant.tools;
 
 /**
  * Validated input for deterministic GraphQL operation analysis.

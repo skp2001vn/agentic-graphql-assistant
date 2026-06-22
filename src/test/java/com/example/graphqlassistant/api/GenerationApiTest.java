@@ -6,7 +6,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.graphqlassistant.agent.InvalidAgentResponseException;
-import com.example.graphqlassistant.api.model.GenerateResponse;
 import com.example.graphqlassistant.assistant.AssistantService;
 import com.example.graphqlassistant.provider.AiProviderException;
 import java.util.Map;
