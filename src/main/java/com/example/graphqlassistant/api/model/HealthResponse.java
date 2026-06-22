@@ -1,4 +1,4 @@
-package com.example.graphqlassistant.api;
+package com.example.graphqlassistant.api.model;
 
 /**
  * Minimal readiness payload returned by the health endpoint.

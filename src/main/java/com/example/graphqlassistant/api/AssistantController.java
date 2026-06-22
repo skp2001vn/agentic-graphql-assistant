@@ -12,6 +12,10 @@ import static com.example.graphqlassistant.config.OpenApiConfiguration.REQUEST_T
 import static com.example.graphqlassistant.config.OpenApiConfiguration.TROUBLESHOOT_RESPONSE;
 import static com.example.graphqlassistant.config.OpenApiConfiguration.UNSUPPORTED_MEDIA_TYPE;
 
+import com.example.graphqlassistant.api.model.ApiError;
+import com.example.graphqlassistant.api.model.AssistantResponse;
+import com.example.graphqlassistant.api.model.GenerateResponse;
+import com.example.graphqlassistant.api.model.TroubleshootResponse;
 import com.example.graphqlassistant.assistant.AssistantService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

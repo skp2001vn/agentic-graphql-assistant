@@ -4,6 +4,7 @@ import com.example.graphqlassistant.agent.AgentExecutionException;
 import com.example.graphqlassistant.agent.AgentTimeoutException;
 import com.example.graphqlassistant.agent.ClarificationRequiredException;
 import com.example.graphqlassistant.agent.InvalidAgentResponseException;
+import com.example.graphqlassistant.api.model.ApiError;
 import com.example.graphqlassistant.provider.AiProviderException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;

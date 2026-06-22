@@ -1,4 +1,4 @@
-package com.example.graphqlassistant.api;
+package com.example.graphqlassistant.api.model;
 
 import java.time.Instant;
 import java.util.List;

@@ -45,7 +45,7 @@ exposes the local health endpoint.
 - `.gitignore`
 - `src/main/java/com/example/graphqlassistant/GraphqlAssistantApplication.java`
 - `src/main/java/com/example/graphqlassistant/api/HealthController.java`
-- `src/main/java/com/example/graphqlassistant/api/HealthResponse.java`
+- `src/main/java/com/example/graphqlassistant/api/model/HealthResponse.java`
 - `src/main/resources/application.yml`
 - `src/test/java/com/example/graphqlassistant/api/HealthControllerTest.java`
 
@@ -124,11 +124,11 @@ Define the externally visible response contracts and consistently enforce the
 ### Likely files
 
 - `src/main/java/com/example/graphqlassistant/api/AssistantController.java`
-- `src/main/java/com/example/graphqlassistant/api/AssistantResponse.java`
-- `src/main/java/com/example/graphqlassistant/api/GenerateResponse.java`
-- `src/main/java/com/example/graphqlassistant/api/TroubleshootResponse.java`
-- `src/main/java/com/example/graphqlassistant/api/TroubleshootingIssue.java`
-- `src/main/java/com/example/graphqlassistant/api/ApiError.java`
+- `src/main/java/com/example/graphqlassistant/api/model/AssistantResponse.java`
+- `src/main/java/com/example/graphqlassistant/api/model/GenerateResponse.java`
+- `src/main/java/com/example/graphqlassistant/api/model/TroubleshootResponse.java`
+- `src/main/java/com/example/graphqlassistant/api/model/TroubleshootingIssue.java`
+- `src/main/java/com/example/graphqlassistant/api/model/ApiError.java`
 - `src/main/java/com/example/graphqlassistant/api/GlobalExceptionHandler.java`
 - `src/main/java/com/example/graphqlassistant/api/RequestIdFilter.java`
 - `src/test/java/com/example/graphqlassistant/api/AssistantRequestValidationTest.java`
@@ -209,8 +209,11 @@ agents, backed by typed, deterministic GraphQL tools.
 - `src/main/java/com/example/graphqlassistant/agent/RoutingDecision.java`
 - `src/main/java/com/example/graphqlassistant/agent/GenerationAgent.java`
 - `src/main/java/com/example/graphqlassistant/agent/TroubleshootingAgent.java`
+- `src/main/java/com/example/graphqlassistant/agent/langchain4j/LangChain4jAgentFactory.java`
 - `src/main/java/com/example/graphqlassistant/tools/GraphqlAssistantTools.java`
 - `src/main/java/com/example/graphqlassistant/tools/SchemaInspectionTool.java`
+- `src/main/java/com/example/graphqlassistant/tools/model/SchemaInspectionResult.java`
+- `src/main/java/com/example/graphqlassistant/tools/model/OperationValidationResult.java`
 - `src/main/java/com/example/graphqlassistant/schema/GraphqlOperationValidator.java`
 - `src/test/java/com/example/graphqlassistant/agent/AssistantOrchestratorTest.java`
 - `src/test/java/com/example/graphqlassistant/tools/GraphqlAssistantToolsTest.java`
@@ -311,7 +314,7 @@ AI-identified issues plus the corrected operation.
 - `src/main/java/com/example/graphqlassistant/assistant/AssistantService.java`
 - `src/main/java/com/example/graphqlassistant/assistant/AssistantPromptFactory.java`
 - `src/main/java/com/example/graphqlassistant/assistant/AiAssistantResult.java`
-- `src/main/java/com/example/graphqlassistant/api/TroubleshootResponse.java`
+- `src/main/java/com/example/graphqlassistant/api/model/TroubleshootResponse.java`
 - `src/test/java/com/example/graphqlassistant/assistant/TroubleshootingServiceTest.java`
 - `src/test/java/com/example/graphqlassistant/api/TroubleshootingApiTest.java`
 

@@ -7,6 +7,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.graphqlassistant.api.model.GenerateResponse;
+import com.example.graphqlassistant.api.model.TroubleshootResponse;
+import com.example.graphqlassistant.api.model.TroubleshootingIssue;
 import com.example.graphqlassistant.assistant.AssistantService;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;

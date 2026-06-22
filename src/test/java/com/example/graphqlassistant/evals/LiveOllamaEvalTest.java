@@ -2,7 +2,7 @@ package com.example.graphqlassistant.evals;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.example.graphqlassistant.api.AssistantResponse;
+import com.example.graphqlassistant.api.model.AssistantResponse;
 import com.example.graphqlassistant.assistant.AssistantService;
 import com.example.graphqlassistant.provider.AssistantAiProvider;
 import com.example.graphqlassistant.provider.LangChain4jAssistantProvider;
