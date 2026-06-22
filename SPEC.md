@@ -53,7 +53,7 @@ server is required.
 
 Source repository:
 
-- GitHub: `https://github.com/skp2001vn/graphql-assistant2`
+- GitHub: `https://github.com/skp2001vn/agentic-graphql-assistant`
 - Visibility: private
 - Local `origin` is connected and authenticated with admin/push permission.
 - `main` contains the reviewed planning baseline and completed task merges.

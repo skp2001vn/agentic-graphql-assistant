@@ -22,7 +22,7 @@ hardening are explicitly outside the approved scope.
 - Operating system: macOS 26.5.1 on `aarch64`
 - Default provider: Ollama at `http://localhost:11434`
 - Default model: `qwen3:8b`, available locally
-- GitHub repository: `skp2001vn/graphql-assistant2`
+- GitHub repository: `skp2001vn/agentic-graphql-assistant`
 - GitHub access: authenticated, reachable, and verified with `ADMIN` permission
 - Starting branch state: local `HEAD`, `main`,
   `origin/codex/build-graphql-assistant`, and `origin/main` all at
