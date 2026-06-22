@@ -10,6 +10,7 @@ import com.example.graphqlassistant.assistant.AssistantService;
 import com.example.graphqlassistant.logging.AssistantRequestLogger;
 import com.example.graphqlassistant.provider.AssistantAiProvider;
 import com.example.graphqlassistant.schema.GraphqlOperationProcessor;
+import com.example.graphqlassistant.schema.GraphqlOperationValidator;
 import com.example.graphqlassistant.schema.GraphqlSchemaContext;
 import com.example.graphqlassistant.tools.GraphqlAssistantTools;
 import org.springframework.context.annotation.Bean;
@@ -29,8 +30,10 @@ public class AgentConfiguration {
 
   @Bean
   GraphqlAssistantTools graphqlAssistantTools(
-      GraphqlSchemaContext schemaContext, AssistantRequestLogger requestLogger) {
-    return GraphqlAssistantTools.from(schemaContext, requestLogger);
+      GraphqlSchemaContext schemaContext,
+      GraphqlOperationValidator operationValidator,
+      AssistantRequestLogger requestLogger) {
+    return GraphqlAssistantTools.from(schemaContext, operationValidator, requestLogger);
   }
 
   @Bean
@@ -73,8 +76,14 @@ public class AgentConfiguration {
   }
 
   @Bean
-  GraphqlOperationProcessor graphqlOperationProcessor(GraphqlSchemaContext schemaContext) {
-    return new GraphqlOperationProcessor(schemaContext);
+  GraphqlOperationValidator graphqlOperationValidator(GraphqlSchemaContext schemaContext) {
+    return new GraphqlOperationValidator(schemaContext);
+  }
+
+  @Bean
+  GraphqlOperationProcessor graphqlOperationProcessor(
+      GraphqlOperationValidator operationValidator) {
+    return new GraphqlOperationProcessor(operationValidator);
   }
 
   @Bean

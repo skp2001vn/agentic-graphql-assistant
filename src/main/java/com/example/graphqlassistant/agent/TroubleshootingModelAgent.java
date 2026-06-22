@@ -46,8 +46,8 @@ public interface TroubleshootingModelAgent {
       Derive every variable name and GraphQL type from the inspected field argument. Declare each
       variable with that exact type and pass it as a variable reference; never use a literal,
       default value, or undeclared variable. Do not return a final answer unless the corrected
-      operation reports valid=true. You have at most four tool calls. Do not call formatOperation
-      because deterministic post-processing formats the final operation.
+      operation reports valid=true. You have at most four tool calls. Deterministic post-processing
+      formats the final operation.
 
       After the tool work is complete, return only one JSON object with exactly these fields:
       {"intent":"TROUBLESHOOT","issues":[{"issue":"...","details":"...",

@@ -211,8 +211,7 @@ agents, backed by typed, deterministic GraphQL tools.
 - `src/main/java/com/example/graphqlassistant/agent/TroubleshootingAgent.java`
 - `src/main/java/com/example/graphqlassistant/tools/GraphqlAssistantTools.java`
 - `src/main/java/com/example/graphqlassistant/tools/SchemaInspectionTool.java`
-- `src/main/java/com/example/graphqlassistant/tools/OperationValidationTool.java`
-- `src/main/java/com/example/graphqlassistant/tools/OperationFormattingTool.java`
+- `src/main/java/com/example/graphqlassistant/schema/GraphqlOperationValidator.java`
 - `src/test/java/com/example/graphqlassistant/agent/AssistantOrchestratorTest.java`
 - `src/test/java/com/example/graphqlassistant/tools/GraphqlAssistantToolsTest.java`
 
@@ -230,8 +229,7 @@ agents, backed by typed, deterministic GraphQL tools.
 - LangChain4j 1.16.3 AI Services and agentic workflow APIs are used.
 - Experimental LangChain4j agentic APIs are isolated behind application-owned
   router/orchestrator interfaces.
-- LangChain4j tool calling exposes `inspectSchema`, `validateOperation`, and
-  `formatOperation`.
+- LangChain4j tool calling exposes `inspectSchema` and `validateOperation`.
 - Tools use typed, validated inputs and structured outputs.
 - Tools are read-only and cannot access files, shell commands, arbitrary
   network endpoints, secrets, or GraphQL execution.

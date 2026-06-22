@@ -41,20 +41,9 @@ public class GlobalExceptionHandler {
         request);
   }
 
-  @ExceptionHandler(AiProviderException.class)
-  ResponseEntity<ApiError> handleAiProviderException(
-      AiProviderException exception, HttpServletRequest request) {
-    return response(
-        HttpStatus.BAD_GATEWAY,
-        "AI_PROVIDER_ERROR",
-        "The configured AI provider could not complete the request.",
-        List.of(),
-        request);
-  }
-
-  @ExceptionHandler(AgentTimeoutException.class)
-  ResponseEntity<ApiError> handleAgentTimeout(
-      AgentTimeoutException exception, HttpServletRequest request) {
+  @ExceptionHandler({AiProviderException.class, AgentTimeoutException.class})
+  ResponseEntity<ApiError> handleAiProviderFailure(
+      Exception exception, HttpServletRequest request) {
     return response(
         HttpStatus.BAD_GATEWAY,
         "AI_PROVIDER_ERROR",

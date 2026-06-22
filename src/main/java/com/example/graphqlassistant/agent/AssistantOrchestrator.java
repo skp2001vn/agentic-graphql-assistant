@@ -2,7 +2,6 @@ package com.example.graphqlassistant.agent;
 
 import com.example.graphqlassistant.logging.AssistantRequestLogger;
 import com.example.graphqlassistant.tools.GraphqlAssistantTools;
-import com.example.graphqlassistant.tools.OperationValidationResult;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -11,14 +10,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Coordinates intent classification, specialist selection, bounded tool use, and deterministic
- * GraphQL validation for one assistant request.
+ * Coordinates intent classification, specialist selection, and bounded tool use for one assistant
+ * request.
  *
  * <p>The orchestrator implements a confidence-gated agentic workflow: a router first performs
  * intent classification, low-confidence requests become clarification outcomes, and accepted
- * requests run through a specialist with a hard timeout and tool-call guardrails. The final
- * operation is validated outside the LLM, keeping schema correctness in deterministic application
- * code rather than relying on probabilistic generation alone.
+ * requests run through a specialist with a hard timeout and tool-call guardrails. Final operation
+ * validation remains at the application service boundary.
  */
 public final class AssistantOrchestrator {
 
@@ -92,8 +90,7 @@ public final class AssistantOrchestrator {
    * Runs the bounded router-specialist pipeline for a natural-language prompt.
    *
    * <p>A virtual thread isolates the blocking model call while the timeout caps total inference and
-   * tool-loop latency. Successful specialist output is schema-validated before it can cross the
-   * application boundary.
+   * tool-loop latency.
    *
    * @param prompt untrusted natural-language generation or troubleshooting request
    * @return either a validated specialist result or a clarification outcome
@@ -155,26 +152,12 @@ public final class AssistantOrchestrator {
         throw new InvalidAgentResponseException(
             "Generation specialist did not inspect the configured schema");
       }
-      validateSpecialistResult(result);
+      if (result == null) {
+        throw new InvalidAgentResponseException("Specialist returned an invalid result");
+      }
       return new SpecialistOutcome(decision, result);
     } finally {
       tools.clearToolTracking();
-    }
-  }
-
-  private void validateSpecialistResult(SpecialistResult result) {
-    if (result == null) {
-      throw new InvalidAgentResponseException("Specialist returned an invalid result");
-    }
-    OperationValidationResult validation;
-    try {
-      validation = tools.validateOperation(result.operation());
-    } catch (IllegalArgumentException exception) {
-      throw new InvalidAgentResponseException("Specialist returned an invalid result");
-    }
-    if (!validation.valid()) {
-      throw new InvalidAgentResponseException(
-          "The specialist returned an invalid GraphQL operation");
     }
   }
 

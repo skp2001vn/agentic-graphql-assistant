@@ -8,11 +8,7 @@ import graphql.execution.TypeFromAST;
 import graphql.execution.ValuesResolver;
 import graphql.language.AstPrinter;
 import graphql.language.Document;
-import graphql.language.Field;
-import graphql.language.Node;
 import graphql.language.OperationDefinition;
-import graphql.language.VariableReference;
-import graphql.parser.Parser;
 import graphql.schema.GraphQLEnumType;
 import graphql.schema.GraphQLInputObjectType;
 import graphql.schema.GraphQLInputType;
@@ -20,8 +16,6 @@ import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLScalarType;
 import graphql.schema.GraphQLSchema;
-import graphql.schema.idl.UnExecutableSchemaGenerator;
-import graphql.validation.Validator;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -45,6 +39,8 @@ public final class GraphqlOperationProcessor {
 
   private static final String UNRESOLVED_VALUE = "<runtime value>";
 
+  private final GraphqlOperationValidator operationValidator;
+
   private final GraphQLSchema schema;
 
   /**
@@ -53,9 +49,12 @@ public final class GraphqlOperationProcessor {
    * @param schemaContext loaded schema text and parsed type registry
    */
   public GraphqlOperationProcessor(GraphqlSchemaContext schemaContext) {
-    Objects.requireNonNull(schemaContext, "schemaContext");
-    schema =
-        UnExecutableSchemaGenerator.makeUnExecutableSchema(schemaContext.typeDefinitionRegistry());
+    this(new GraphqlOperationValidator(schemaContext));
+  }
+
+  public GraphqlOperationProcessor(GraphqlOperationValidator operationValidator) {
+    this.operationValidator = Objects.requireNonNull(operationValidator, "operationValidator");
+    schema = operationValidator.schema();
   }
 
   /**
@@ -82,16 +81,17 @@ public final class GraphqlOperationProcessor {
     if (operation == null || operation.isBlank() || variables == null) {
       throw invalidOperation();
     }
+    var validation = operationValidator.validate(operation);
+    if (!validation.valid()) {
+      throw invalidOperation();
+    }
     try {
-      Document document = Parser.parse(operation);
-      OperationDefinition definition = requireOneNamedOperation(document);
-      requireValidDocument(document);
-      requireVariableArguments(document);
+      Document document = validation.document();
+      OperationDefinition definition =
+          document.getDefinitionsOfType(OperationDefinition.class).getFirst();
       Map<String, Object> resolvedVariables = resolveExampleVariables(definition, variables);
       requireCompatibleVariables(definition, resolvedVariables);
       return new ProcessedOperation(AstPrinter.printAst(document).strip(), resolvedVariables);
-    } catch (InvalidAgentResponseException exception) {
-      throw exception;
     } catch (GraphQLException exception) {
       throw invalidOperation();
     }
@@ -154,37 +154,6 @@ public final class GraphqlOperationProcessor {
       return "Example";
     }
     return "example";
-  }
-
-  private OperationDefinition requireOneNamedOperation(Document document) {
-    var operations = document.getDefinitionsOfType(OperationDefinition.class);
-    if (operations.size() != 1) {
-      throw invalidOperation();
-    }
-
-    OperationDefinition operation = operations.getFirst();
-    if (operation.getName() == null
-        || operation.getName().isBlank()
-        || !Character.isUpperCase(operation.getName().codePointAt(0))
-        || operation.getOperation() == OperationDefinition.Operation.SUBSCRIPTION) {
-      throw invalidOperation();
-    }
-    return operation;
-  }
-
-  private void requireValidDocument(Document document) {
-    if (!new Validator().validateDocument(schema, document, Locale.ROOT).isEmpty()) {
-      throw invalidOperation();
-    }
-  }
-
-  private void requireVariableArguments(Node<?> node) {
-    if (node instanceof Field field
-        && field.getArguments().stream()
-            .anyMatch(argument -> !(argument.getValue() instanceof VariableReference))) {
-      throw invalidOperation();
-    }
-    node.getChildren().forEach(this::requireVariableArguments);
   }
 
   private void requireCompatibleVariables(
