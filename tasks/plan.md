@@ -236,7 +236,8 @@ agents, backed by typed, deterministic GraphQL tools.
 - Tool calls are capped at four rounds by default and respect the overall
   timeout.
 - Invalid tool arguments and tool-loop exhaustion fail predictably.
-- The final application boundary independently validates returned operations.
+- The final application boundary invokes shared deterministic validation
+  independently of whether the specialist called `validateOperation`.
 - Tests cover routing, tool selection, tool output, invalid arguments, and loop
   limits.
 - Tests prove that the router runs before the specialist and malformed router

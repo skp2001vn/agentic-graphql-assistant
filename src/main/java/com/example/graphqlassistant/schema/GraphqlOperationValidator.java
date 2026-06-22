@@ -19,7 +19,13 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Applies schema and assistant-contract validation to GraphQL operations. */
+/**
+ * Applies the shared deterministic validation rules for GraphQL operations.
+ *
+ * <p>The model-facing {@code validateOperation} tool and the final application-boundary processor
+ * both use this validator so syntax, schema, and assistant-contract diagnostics cannot drift. It
+ * parses but never executes operations.
+ */
 public final class GraphqlOperationValidator {
 
   private static final int MAX_OPERATION_LENGTH = 100 * 1024;
@@ -29,12 +35,23 @@ public final class GraphqlOperationValidator {
 
   private final GraphQLSchema schema;
 
+  /**
+   * Builds the validation schema from the configured SDL registry.
+   *
+   * @param schemaContext loaded schema text and parsed type registry
+   */
   public GraphqlOperationValidator(GraphqlSchemaContext schemaContext) {
     Objects.requireNonNull(schemaContext, "schemaContext");
     schema =
         UnExecutableSchemaGenerator.makeUnExecutableSchema(schemaContext.typeDefinitionRegistry());
   }
 
+  /**
+   * Parses an operation and reports all deterministic validation diagnostics available.
+   *
+   * @param operation GraphQL operation text
+   * @return parsed document when syntax is valid, plus immutable diagnostics
+   */
   public ValidationResult validate(String operation) {
     if (operation.length() > MAX_OPERATION_LENGTH) {
       return new ValidationResult(
@@ -171,19 +188,41 @@ public final class GraphqlOperationValidator {
     return location == null ? new SourceLocation(0, 0) : location;
   }
 
+  /**
+   * Parsed operation and diagnostics returned by the shared validator.
+   *
+   * @param document parsed operation, or {@code null} when parsing failed
+   * @param diagnostics immutable validation diagnostics
+   */
   public record ValidationResult(Document document, List<Diagnostic> diagnostics) {
 
+    /** Copies diagnostics so validation results remain immutable. */
     public ValidationResult {
       diagnostics = List.copyOf(diagnostics);
     }
 
+    /**
+     * Reports whether validation produced no diagnostics.
+     *
+     * @return {@code true} when the operation satisfies all shared validation rules
+     */
     public boolean valid() {
       return diagnostics.isEmpty();
     }
   }
 
+  /**
+   * Structured validation diagnostic suitable for application and model-tool consumers.
+   *
+   * @param code stable diagnostic category
+   * @param message human-readable validation detail
+   * @param line one-based source line, or zero when unavailable
+   * @param column one-based source column, or zero when unavailable
+   * @param path schema-validation query path, or an empty list
+   */
   public record Diagnostic(String code, String message, int line, int column, List<String> path) {
 
+    /** Copies the query path so diagnostics remain immutable. */
     public Diagnostic {
       path = List.copyOf(path);
     }

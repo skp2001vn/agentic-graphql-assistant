@@ -99,7 +99,10 @@ The router must select `GENERATE`, `TROUBLESHOOT`, or
 Tool calls are read-only, inputs are validated, and tool-call rounds are
 bounded. Evaluations should flag unnecessary tools, unsafe tool arguments,
 invented schema fields, incomplete troubleshooting issue coverage, or a result
-that differs from the final deterministic validation outcome.
+that differs from the final deterministic validation outcome. The
+`validateOperation` tool and final `GraphqlOperationProcessor` boundary share
+`GraphqlOperationValidator`; evaluations should verify that the final boundary
+still invokes those rules independently of whether the model used the tool.
 
 Model-based judging may supplement deterministic grading for semantic quality,
 but it never overrides hard contract or GraphQL-validation failures. The
@@ -122,7 +125,7 @@ For each failed case, inspect:
 2. provider transcript or raw live response
 3. tool names, inputs, outputs, and round count
 4. structured response mapping
-5. final GraphQL parse, schema validation, and formatting result
+5. shared-validator result plus final variable coercion and AST formatting
 6. latency and the explicit failure reason
 
 Add a regression case before correcting a defect discovered by either suite.
