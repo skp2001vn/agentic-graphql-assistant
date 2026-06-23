@@ -16,6 +16,8 @@ emphasizes embedding-based RAG and inference optimization, this application
 emphasizes bounded agentic tool use with LangChain4j, backed by deterministic
 GraphQL verification.
 
+![GraphQL troubleshooting request and corrected response in Postman](docs/images/graphql-troubleshooting-example.png)
+
 ## AI Concepts Covered
 
 - **Intent routing:** classifies each prompt as generation, troubleshooting, or
