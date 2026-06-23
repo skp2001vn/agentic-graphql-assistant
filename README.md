@@ -1,6 +1,6 @@
-# GraphQL Assistant
+# GraphQL AI Assistant
 
-GraphQL Assistant supports two workflows through a single `/assistant` endpoint
+GraphQL AI Assistant supports two workflows through a single `/assistant` endpoint
 using natural-language requests:
 
 - generate a named, schema-valid GraphQL query or mutation
