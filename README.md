@@ -41,45 +41,6 @@ GraphQL verification.
 - **AI evaluation:** combines deterministic transcript-based cases with
   optional live-model quality and latency measurements.
 
-## How it works
-
-```mermaid
-flowchart TD
-    A["POST /assistant<br/>UTF-8 text prompt"] --> B["Assign request ID<br/>Validate request"]
-    B --> C["LLM intent router"]
-
-    C -->|"GENERATE"| G["Generation specialist LLM"]
-    G --> GI["Deterministic tool: inspectSchema<br/>Retrieve relevant roots and types"]
-    GI --> GC["LLM creates one schema-grounded<br/>operation with variables"]
-    GC --> GV["Deterministic tool: validateOperation"]
-    GV -->|"Invalid and budget remains"| GR["LLM revises from all diagnostics"]
-    GR --> GV
-    GV -->|"valid=true"| S["Structured specialist result"]
-
-    C -->|"TROUBLESHOOT"| T["Troubleshooting specialist LLM"]
-    T --> TV1["Deterministic tool: validateOperation"]
-    TV1 -->|"Already valid"| S
-    TV1 -->|"Syntax diagnostics"| TF1["LLM applies exact syntax repair"]
-    TF1 --> TV2["Deterministic tool: validateOperation"]
-    TV1 -->|"Schema diagnostics"| TI["Deterministic tool: inspectSchema<br/>Retrieve relevant parent types"]
-    TI --> TF2["LLM creates one correction<br/>covering all diagnostics"]
-    TF2 --> TV2
-    TV1 -->|"Other contract diagnostics"| TF2
-    TV2 -->|"Still invalid and budget remains"| TF3["LLM applies diagnostics<br/>and inspects schema when needed"]
-    TF3 --> TV2
-    TV2 -->|"valid=true"| S
-
-    C -->|"CLARIFICATION_REQUIRED<br/>or confidence below threshold"| Q["Return 422 clarification guidance<br/>No specialist or tools run"]
-
-    S --> D["AssistantService<br/>Check routed intent and response contract"]
-    D --> P["GraphqlOperationProcessor<br/>Validate operation and variables<br/>Format the AST"]
-    P --> R["Return normalized<br/>GENERATE or TROUBLESHOOT JSON"]
-
-    L["Selected specialist:<br/>at most four tool calls"] -.-> G
-    L -.-> T
-    H["Router + selected specialist:<br/>hard timeout"] -.-> C
-```
-
 ## Documentation
 
 This README is the practical setup, usage, and contribution guide. The
