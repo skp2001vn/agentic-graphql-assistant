@@ -30,12 +30,8 @@ GraphQL verification.
   providing a RAG-style pattern without embeddings or a vector database.
 - **Prompt engineering:** uses separate system instructions for routing,
   generation, and troubleshooting.
-- **Structured output:** converts model-produced JSON into typed domain records
-  before business processing.
 - **Guardrails:** validates prompt boundaries, tool inputs, GraphQL syntax,
   schema compatibility, variable shapes, and final response contracts.
-- **Provider abstraction:** runs the same agent workflow with local Ollama or
-  hosted OpenAI inference.
 - **Observability:** correlates routing, inference, tools, latency, and outcomes
   with a request ID while keeping full-content logging opt-in.
 - **AI evaluation:** combines deterministic transcript-based cases with
