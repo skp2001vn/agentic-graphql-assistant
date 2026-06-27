@@ -16,9 +16,7 @@ emphasizes embedding-based RAG and inference optimization, this application
 emphasizes bounded agentic tool use with LangChain4j, backed by deterministic
 GraphQL verification.
 
-<a href="https://www.youtube.com/watch?v=yybfj4oYFS8" aria-label="Watch the GraphQL Assistant Postman demo on YouTube">
-  <img src="https://img.youtube.com/vi/yybfj4oYFS8/maxresdefault.jpg" alt="GraphQL Assistant Postman demo on YouTube" width="960">
-</a>
+![GraphQL troubleshooting request and corrected response in Postman](docs/images/troubleshooting-example.png)
 
 ## AI Concepts Covered
 
