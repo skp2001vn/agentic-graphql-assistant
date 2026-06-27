@@ -82,7 +82,7 @@ class AssistantLoggingTest {
             "\"rawAiResponse\":",
             "response-id",
             "private reasoning [REDACTED]",
-            "query ListCountries",
+            "query GetCountries",
             "\"event\":\"assistant_tool_completed\"",
             "\"toolName\":\"inspectSchema\"",
             "\"toolInput\":",
@@ -200,11 +200,34 @@ class AssistantLoggingTest {
                             .build()))
                 .build();
         case 2 ->
+            ChatResponse.builder()
+                .aiMessage(
+                    AiMessage.from(
+                        ToolExecutionRequest.builder()
+                            .id("inspect-nested-country")
+                            .name("inspectSchema")
+                            .arguments("{\"typeNames\":[\"Continent\",\"Language\"]}")
+                            .build()))
+                .build();
+        case 3 ->
+            ChatResponse.builder()
+                .aiMessage(
+                    AiMessage.from(
+                        ToolExecutionRequest.builder()
+                            .id("validate-countries")
+                            .name("validateOperation")
+                            .arguments(
+                                """
+                                {"operation":"query GetCountries { countries { code name native emoji capital currency continent { code name } languages { code name } } }"}
+                                """)
+                            .build()))
+                .build();
+        case 4 ->
             response(
                 """
                 {
                   "intent":"GENERATE",
-                  "operation":"query ListCountries{countries{code name}}",
+                  "operation":"query GetCountries { countries { code name native emoji capital currency continent { code name } languages { code name } } }",
                   "variables":{}
                 }
                 """);

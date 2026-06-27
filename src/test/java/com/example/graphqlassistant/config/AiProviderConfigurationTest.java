@@ -49,6 +49,7 @@ class AiProviderConfigurationTest {
               assertThat(provider.providerName()).isEqualTo("openai");
               assertThat(provider.modelName()).isEqualTo("gpt-5.4-mini");
               assertThat(provider.defaultRequestParameters().modelName()).isEqualTo("gpt-5.4-mini");
+              assertThat(provider.defaultRequestParameters().temperature()).isEqualTo(0.0);
             });
   }
 
