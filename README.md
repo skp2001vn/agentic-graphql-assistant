@@ -16,7 +16,7 @@ emphasizes embedding-based RAG and inference optimization, this application
 emphasizes bounded agentic tool use with LangChain4j, backed by deterministic
 GraphQL verification.
 
-![GraphQL troubleshooting request and corrected response in Postman](docs/images/graphql-troubleshooting-example.png)
+![GraphQL troubleshooting request and corrected response in Postman](docs/images/troubleshooting-example.png)
 
 ## AI Concepts Covered
 
@@ -207,7 +207,6 @@ Set the provider, key, and optional model:
 
 ```bash
 export ASSISTANT_AI_PROVIDER=openai
-export OPENAI_API_KEY=replace-with-your-openai-api-key
 export ASSISTANT_AI_OPENAI_MODEL=gpt-5.4-mini
 ./mvnw spring-boot:run
 ```
