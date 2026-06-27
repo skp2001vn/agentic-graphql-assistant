@@ -80,6 +80,7 @@ public class AiProviderConfiguration {
             .apiKey(apiKey)
             .modelName(model)
             .timeout(timeout)
+            .temperature(0.0)
             .maxRetries(0)
             .logRequests(false)
             .logResponses(false)

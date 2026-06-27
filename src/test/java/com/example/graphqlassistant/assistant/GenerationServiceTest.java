@@ -34,13 +34,35 @@ class GenerationServiceTest {
       type Query {
         countries: [Country!]!
         country(code: ID!): Country
+        continents: [Continent!]!
+        continent(code: ID!): Continent
       }
 
       type Country {
         code: ID!
         name: String!
+        native: String!
+        emoji: String!
+        capital: String
+        currency: String
+        continent: Continent!
+        languages: [Language!]!
+      }
+
+      type Continent {
+        code: ID!
+        name: String!
+      }
+
+      type Language {
+        code: ID!
+        name: String
       }
       """;
+
+  private static final String FULL_COUNTRIES_OPERATION =
+      "query GetCountries { countries { code name native emoji capital currency continent { code"
+          + " name } languages { code name } } }";
 
   @Test
   void generatesAValidatedListQueryAfterInspectingTheSchema() {
@@ -65,12 +87,14 @@ class GenerationServiceTest {
                                     .arguments("{\"typeNames\":[\"Country\"]}")
                                     .build()))
                         .build();
-                case 3 ->
+                case 3 -> inspectNestedCountrySchema();
+                case 4 -> validateOperation("validate-list", FULL_COUNTRIES_OPERATION);
+                case 5 ->
                     response(
                         """
                         {
                           "intent":"GENERATE",
-                          "operation":"query ListCountries{countries{code name}}",
+                          "operation":"query GetCountries { countries { code name native emoji capital currency continent { code name } languages { code name } } }",
                           "variables":{}
                         }
                         """);
@@ -85,9 +109,26 @@ class GenerationServiceTest {
     assertThat(result.intent()).isEqualTo("GENERATE");
     assertThat(result.query())
         .containsExactly(
-            "query ListCountries {", "  countries {", "    code", "    name", "  }", "}");
+            "query GetCountries {",
+            "  countries {",
+            "    code",
+            "    name",
+            "    native",
+            "    emoji",
+            "    capital",
+            "    currency",
+            "    continent {",
+            "      code",
+            "      name",
+            "    }",
+            "    languages {",
+            "      code",
+            "      name",
+            "    }",
+            "  }",
+            "}");
     assertThat(result.variables()).isEmpty();
-    assertThat(requests).hasSize(3);
+    assertThat(requests).hasSize(5);
     assertThat(requests.get(1).toolSpecifications())
         .extracting(specification -> specification.name())
         .containsExactlyInAnyOrder("inspectSchema", "validateOperation");
@@ -108,14 +149,21 @@ class GenerationServiceTest {
                     """
                     {
                       "intent":"GENERATE",
-                      "operation":"query GetCountry($code:ID!){country(code:$code){code name}}",
+                      "operation":"query GetCountryByCode($code: ID!) { country(code: $code) { code name native emoji capital currency continent { code name } languages { code name } } }",
                       "variables":{"code":"CA"}
                     }
                     """)));
 
     GenerateResponse result = (GenerateResponse) service.assist("Generate a query for country CA.");
 
-    assertThat(result.query().getFirst()).isEqualTo("query GetCountry($code: ID!) {");
+    assertThat(result.query())
+        .contains(
+            "    native",
+            "    emoji",
+            "    capital",
+            "    currency",
+            "    continent {",
+            "    languages {");
     assertThat(result.variables()).containsExactlyEntriesOf(Map.of("code", "CA"));
   }
 
@@ -139,14 +187,14 @@ class GenerationServiceTest {
                     "validate-repair",
                     "validateOperation",
                     """
-                    {"operation":"query GetCountryByCode($code: ID!) { country(code: $code) { code name } }"}
+                    {"operation":"query GetCountryByCode($code: ID!) { country(code: $code) { code name native emoji capital currency continent { code name } languages { code name } } }"}
                     """),
                 response(
                     """
                     {
                       "intent":"GENERATE",
                       "issues":[],
-                      "operation":"query GetCountryByCode($code: ID!) { country(code: $code) { code name } }",
+                      "operation":"query GetCountryByCode($code: ID!) { country(code: $code) { code name native emoji capital currency continent { code name } languages { code name } } }",
                       "variables":{"code":"CA"}
                     }
                     """)));
@@ -338,6 +386,15 @@ class GenerationServiceTest {
                     .arguments("{\"typeNames\":[\"Country\"]}")
                     .build()))
         .build();
+  }
+
+  private static ChatResponse inspectNestedCountrySchema() {
+    return toolCall(
+        "inspect-nested-country", "inspectSchema", "{\"typeNames\":[\"Continent\",\"Language\"]}");
+  }
+
+  private static ChatResponse validateOperation(String id, String operation) {
+    return toolCall(id, "validateOperation", "{\"operation\":\"" + operation + "\"}");
   }
 
   private static ChatResponse toolCall(String id, String name, String arguments) {

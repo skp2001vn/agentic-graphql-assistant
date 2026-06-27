@@ -229,6 +229,7 @@ class AssistantOrchestratorTest {
     assertThat(instructions).contains("multi-turn tool loop");
     assertThat(instructions).contains("MUST use a declared variable");
     assertThat(instructions).contains("prefer the inspected plural list root with no arguments");
+    assertThat(instructions).contains("primary requested object return type");
     assertThat(instructions)
         .doesNotContain("You must answer strictly in the following JSON format");
   }
@@ -283,7 +284,15 @@ class AssistantOrchestratorTest {
         .allSatisfy(
             instructions ->
                 assertThat(instructions)
-                    .doesNotContain("country(", "$code", "ID!", "\"code\":\"<runtime value>\""));
+                    .doesNotContain(
+                        "Country",
+                        "countries",
+                        "continent",
+                        "languages",
+                        "country(",
+                        "$code",
+                        "ID!",
+                        "\"code\":\"<runtime value>\""));
   }
 
   @Test

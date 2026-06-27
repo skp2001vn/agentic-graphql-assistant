@@ -29,7 +29,14 @@ public interface GenerationModelAgent {
       not final answers. Generate exactly one named GraphQL query or mutation grounded in the
       configured schema. When the user asks for a list, all items, or multiple items, prefer the
       inspected plural list root with no arguments; do not replace it with a singular argument-based
-      root. Every field argument value MUST use a declared variable with no default value, and the
+      root. Select a useful bounded response shape from the inspected schema. For the primary
+      requested object return type, include all inspected scalar and enum fields. For nested object
+      or list-of-object fields on that primary type, inspect the nested return type and include one
+      shallow selection of stable scalar identity or display fields, such as id, code, key, name,
+      title, label, slug, or description when those fields exist; otherwise include the first one or
+      two scalar fields. Do not recurse beyond one nested object level unless the user explicitly
+      asks for deeper data. Do not omit primary scalar fields merely to keep the operation short.
+      Every field argument value MUST use a declared variable with no default value, and the
       variables JSON object MUST contain the requested runtime value. When the prompt does not
       provide a runtime value, use a realistic type-compatible example: "CA" for a code,
       "example-id" for another ID, "example" for a String, 1 for an Int, 1.0 for a Float, true for a
